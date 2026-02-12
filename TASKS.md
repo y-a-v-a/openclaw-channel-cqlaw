@@ -75,26 +75,26 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 2.1 XML-RPC Client
 
-- [ ] **2.1.1** Add an XML-RPC client library dependency (e.g., `xmlrpc` npm package or implement a minimal client using raw HTTP POST since XML-RPC is simple)
-- [ ] **2.1.2** Create an `FldigiClient` class that encapsulates the XML-RPC connection to fldigi
-- [ ] **2.1.3** Implement the `connect()` method that validates fldigi is reachable at the configured host:port
-- [ ] **2.1.4** Implement `getRxData()` method wrapping fldigi's `main.get_rx_data` (or `text.get_rx` depending on fldigi version — detect which is available)
-- [ ] **2.1.5** Implement `getRxText()` as an alternative method for fetching decoded text from the receive buffer
-- [ ] **2.1.6** Implement `getVersion()` to query fldigi version and log it on startup for debugging
-- [ ] **2.1.7** Implement `getFrequency()` to read the currently tuned frequency from fldigi
-- [ ] **2.1.8** Implement `getMode()` to read the current operating mode from fldigi
-- [ ] **2.1.9** Implement `getSignalNoiseRatio()` to read the S/N ratio for signal quality metadata
-- [ ] **2.1.10** Implement `getWpm()` to read the detected receive speed (WPM) from fldigi
-- [ ] **2.1.11** Add TypeScript type definitions for all fldigi XML-RPC method responses
+- [x] **2.1.1** Add an XML-RPC client library dependency (e.g., `xmlrpc` npm package or implement a minimal client using raw HTTP POST since XML-RPC is simple)
+- [x] **2.1.2** Create an `FldigiClient` class that encapsulates the XML-RPC connection to fldigi
+- [x] **2.1.3** Implement the `connect()` method that validates fldigi is reachable at the configured host:port
+- [x] **2.1.4** Implement `getRxData()` method wrapping fldigi's `main.get_rx_data` (or `text.get_rx` depending on fldigi version — detect which is available)
+- [x] **2.1.5** Implement `getRxText()` as an alternative method for fetching decoded text from the receive buffer
+- [x] **2.1.6** Implement `getVersion()` to query fldigi version and log it on startup for debugging
+- [x] **2.1.7** Implement `getFrequency()` to read the currently tuned frequency from fldigi
+- [x] **2.1.8** Implement `getMode()` to read the current operating mode from fldigi
+- [x] **2.1.9** Implement `getSignalNoiseRatio()` to read the S/N ratio for signal quality metadata
+- [x] **2.1.10** Implement `getWpm()` to read the detected receive speed (WPM) from fldigi
+- [x] **2.1.11** Add TypeScript type definitions for all fldigi XML-RPC method responses
 
 ### 2.2 Polling Loop
 
-- [ ] **2.2.1** Replace the hardcoded test string dispatch in the background service with a polling loop
-- [ ] **2.2.2** The polling loop calls `FldigiClient.getRxData()` at the configured interval (default 250ms)
-- [ ] **2.2.3** Track the last-read position in fldigi's receive buffer to avoid re-reading old data
-- [ ] **2.2.4** Implement a clean start/stop mechanism for the polling loop tied to the service lifecycle
-- [ ] **2.2.5** Add performance logging: log polling latency periodically (e.g., every 60 seconds) to detect bottlenecks
-- [ ] **2.2.6** Ensure the polling loop does not drift — if a poll takes longer than the interval, skip rather than queue up
+- [x] **2.2.1** Replace the hardcoded test string dispatch in the background service with a polling loop
+- [x] **2.2.2** The polling loop calls `FldigiClient.getRxData()` at the configured interval (default 250ms)
+- [x] **2.2.3** Track the last-read position in fldigi's receive buffer to avoid re-reading old data
+- [x] **2.2.4** Implement a clean start/stop mechanism for the polling loop tied to the service lifecycle
+- [x] **2.2.5** Add performance logging: log polling latency periodically (e.g., every 60 seconds) to detect bottlenecks
+- [x] **2.2.6** Ensure the polling loop does not drift — if a poll takes longer than the interval, skip rather than queue up
 
 ### 2.3 Sentence Buffering Logic
 
@@ -121,12 +121,12 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 2.5 Error Handling and Resilience
 
-- [ ] **2.5.1** Implement reconnect logic: if fldigi becomes unreachable, retry with exponential backoff (1s, 2s, 4s, 8s, max 30s)
-- [ ] **2.5.2** Log warnings when fldigi connection is lost, log info when reconnected
-- [ ] **2.5.3** Graceful degradation: if XML-RPC is unavailable, the plugin should remain loaded but inactive, not crash the gateway
-- [ ] **2.5.4** Handle fldigi restart mid-session: detect buffer reset (position jump backward) and re-synchronize
-- [ ] **2.5.5** Handle XML-RPC timeout: set a per-request timeout (e.g., 5 seconds) and treat timeouts as temporary failures
-- [ ] **2.5.6** Emit channel status events to the gateway: `connected`, `disconnected`, `reconnecting`, `error`
+- [x] **2.5.1** Implement reconnect logic: if fldigi becomes unreachable, retry with exponential backoff (1s, 2s, 4s, 8s, max 30s)
+- [x] **2.5.2** Log warnings when fldigi connection is lost, log info when reconnected
+- [x] **2.5.3** Graceful degradation: if XML-RPC is unavailable, the plugin should remain loaded but inactive, not crash the gateway
+- [x] **2.5.4** Handle fldigi restart mid-session: detect buffer reset (position jump backward) and re-synchronize
+- [x] **2.5.5** Handle XML-RPC timeout: set a per-request timeout (e.g., 5 seconds) and treat timeouts as temporary failures
+- [x] **2.5.6** Emit channel status events to the gateway: `connected`, `disconnected`, `reconnecting`, `error`
 
 ### 2.6 Development Tooling for Phase 2
 
@@ -699,4 +699,4 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - Minimal: decode + log only (operator does all TX)
   - Moderate: decode + log + suggest responses (operator approves before TX)
   - Full: decode + log + auto-respond (operator monitors, can intervene)
-- [ ] **OQ.6** Evaluate whether to use an existing XML-RPC npm package or write a minimal client (fldigi's XML-RPC surface is small enough that a custom client may be simpler and have fewer dependencies).
+- [x] **OQ.6** Evaluate whether to use an existing XML-RPC npm package or write a minimal client (fldigi's XML-RPC surface is small enough that a custom client may be simpler and have fewer dependencies). **Decision: custom client in `src/xmlrpc.ts` — zero dependencies, ~130 lines.**
