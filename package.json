@@ -1,0 +1,26 @@
+{
+  "name": "openclaw-channel-cqlaw",
+  "version": "0.1.0",
+  "description": "OpenClaw channel plugin for CW/Morse code via SDR radio and fldigi",
+  "main": "src/index.ts",
+  "openclaw": {
+    "extensions": "src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/test/**/*.test.js",
+    "pretest": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/y-a-v-a/openclaw-channel-cqlaw.git"
+  },
+  "keywords": ["openclaw", "morse", "cw", "ham-radio", "sdr", "fldigi"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  }
+}

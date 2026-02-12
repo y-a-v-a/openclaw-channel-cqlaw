@@ -1,0 +1,13 @@
+{
+  "name": "cqlaw",
+  "version": "0.1.0",
+  "description": "CW/Morse code radio channel for OpenClaw via fldigi and SDR",
+  "capabilities": ["channel"],
+  "channel": {
+    "id": "morse-radio",
+    "name": "Morse Radio",
+    "description": "Receive and transmit Morse code (CW) via SDR radio and fldigi",
+    "chatTypes": ["direct"],
+    "messageTypes": ["text"]
+  }
+}

@@ -10,39 +10,39 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 1.1 Project Initialization
 
-- [ ] **1.1.1** Initialize the project with `package.json` including `openclaw.extensions` entry point field
-- [ ] **1.1.2** Set up TypeScript configuration (`tsconfig.json`) targeting the OpenClaw plugin runtime (jiti, no compile step required)
-- [ ] **1.1.3** Create `openclaw.plugin.json` manifest declaring the plugin name (`cqlaw`), version, and capabilities
+- [x] **1.1.1** Initialize the project with `package.json` including `openclaw.extensions` entry point field
+- [x] **1.1.2** Set up TypeScript configuration (`tsconfig.json`) targeting the OpenClaw plugin runtime (jiti, no compile step required)
+- [x] **1.1.3** Create `openclaw.plugin.json` manifest declaring the plugin name (`cqlaw`), version, and capabilities
 - [ ] **1.1.4** Set up linting (ESLint) and formatting (Prettier) configuration
-- [ ] **1.1.5** Set up the `test/` directory structure with a test runner (vitest or jest)
-- [ ] **1.1.6** Create a `.gitignore` covering `node_modules/`, `dist/`, and any local config files
-- [ ] **1.1.7** Add a `README.md` with basic project description, prerequisites, and install instructions
+- [x] **1.1.5** Set up the `test/` directory structure with a test runner (vitest or jest)
+- [x] **1.1.6** Create a `.gitignore` covering `node_modules/`, `dist/`, and any local config files
+- [x] **1.1.7** Add a `README.md` with basic project description, prerequisites, and install instructions
 
 ### 1.2 Channel Registration
 
-- [ ] **1.2.1** Implement the `register()` entry function that the OpenClaw gateway calls on plugin load
-- [ ] **1.2.2** Inside `register()`, call `api.registerChannel()` with a `morse-radio` channel definition
-- [ ] **1.2.3** Set channel capabilities to `direct` chat type only (no groups — radio is modeled as 1:1 session per frequency)
-- [ ] **1.2.4** Define the channel's metadata: name, description, icon identifier, and supported message types (text only initially)
+- [x] **1.2.1** Implement the `register()` entry function that the OpenClaw gateway calls on plugin load
+- [x] **1.2.2** Inside `register()`, call `api.registerChannel()` with a `morse-radio` channel definition
+- [x] **1.2.3** Set channel capabilities to `direct` chat type only (no groups — radio is modeled as 1:1 session per frequency)
+- [x] **1.2.4** Define the channel's metadata: name, description, icon identifier, and supported message types (text only initially)
 
 ### 1.3 Outbound Message Handler (Stub)
 
-- [ ] **1.3.1** Implement the `outbound.sendText` handler function
-- [ ] **1.3.2** For Phase 1, this handler should log the agent's text response to console/gateway logs with a prefix like `[CW-TX-STUB]`
-- [ ] **1.3.3** Include a placeholder comment/TODO marking where future fldigi `main.tx_text` XML-RPC calls will go
-- [ ] **1.3.4** Return a success acknowledgment to the gateway so the message flow completes cleanly
+- [x] **1.3.1** Implement the `outbound.sendText` handler function
+- [x] **1.3.2** For Phase 1, this handler should log the agent's text response to console/gateway logs with a prefix like `[CW-TX-STUB]`
+- [x] **1.3.3** Include a placeholder comment/TODO marking where future fldigi `main.tx_text` XML-RPC calls will go
+- [x] **1.3.4** Return a success acknowledgment to the gateway so the message flow completes cleanly
 
 ### 1.4 Background Service Stub
 
-- [ ] **1.4.1** Create a background service class/module to be registered via `api.registerService()`
-- [ ] **1.4.2** Implement the service lifecycle methods: `start()`, `stop()`, and any health-check hooks the gateway expects
-- [ ] **1.4.3** In the `start()` method, push a hardcoded test string (`"CQ CQ DE PI4ABC"`) into the gateway session as an inbound message using `api.dispatchInbound({ text, peer, channel })`
-- [ ] **1.4.4** Confirm the test string arrives in the agent session by checking gateway logs
-- [ ] **1.4.5** Add a configurable delay before dispatching the test string (e.g., 2 seconds after service start) to allow the gateway to fully initialize
+- [x] **1.4.1** Create a background service class/module to be registered via `api.registerService()`
+- [x] **1.4.2** Implement the service lifecycle methods: `start()`, `stop()`, and any health-check hooks the gateway expects
+- [x] **1.4.3** In the `start()` method, push a hardcoded test string (`"CQ CQ DE PI4ABC"`) into the gateway session as an inbound message using `api.dispatchInbound({ text, peer, channel })`
+- [x] **1.4.4** Confirm the test string arrives in the agent session by checking gateway logs
+- [x] **1.4.5** Add a configurable delay before dispatching the test string (e.g., 2 seconds after service start) to allow the gateway to fully initialize
 
 ### 1.5 Channel Configuration Schema
 
-- [ ] **1.5.1** Define the channel config structure in `openclaw.json` with the following fields:
+- [x] **1.5.1** Define the channel config structure in `openclaw.json` with the following fields:
   - `frequency` (number, Hz — e.g., `7030000` for 7.030 MHz)
   - `mode` (string — `"CW"`, `"USB"`, etc.)
   - `fldigi.host` (string — default `"127.0.0.1"`)
@@ -55,9 +55,9 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `tx.maxDurationSeconds` (number — safety limit)
   - `tx.wpm` (number — words per minute, default `20`)
   - `tx.callsign` (string — the station's own callsign, required for TX)
-- [ ] **1.5.2** Implement config validation with clear error messages for missing/invalid fields
-- [ ] **1.5.3** Implement config defaults so only required fields need to be specified
-- [ ] **1.5.4** Document each config field with inline comments or a config schema reference
+- [x] **1.5.2** Implement config validation with clear error messages for missing/invalid fields
+- [x] **1.5.3** Implement config defaults so only required fields need to be specified
+- [x] **1.5.4** Document each config field with inline comments or a config schema reference
 
 ### 1.6 Installation and Verification
 
@@ -75,68 +75,68 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 2.1 XML-RPC Client
 
-- [ ] **2.1.1** Add an XML-RPC client library dependency (e.g., `xmlrpc` npm package or implement a minimal client using raw HTTP POST since XML-RPC is simple)
-- [ ] **2.1.2** Create an `FldigiClient` class that encapsulates the XML-RPC connection to fldigi
-- [ ] **2.1.3** Implement the `connect()` method that validates fldigi is reachable at the configured host:port
-- [ ] **2.1.4** Implement `getRxData()` method wrapping fldigi's `main.get_rx_data` (or `text.get_rx` depending on fldigi version — detect which is available)
-- [ ] **2.1.5** Implement `getRxText()` as an alternative method for fetching decoded text from the receive buffer
-- [ ] **2.1.6** Implement `getVersion()` to query fldigi version and log it on startup for debugging
-- [ ] **2.1.7** Implement `getFrequency()` to read the currently tuned frequency from fldigi
-- [ ] **2.1.8** Implement `getMode()` to read the current operating mode from fldigi
-- [ ] **2.1.9** Implement `getSignalNoiseRatio()` to read the S/N ratio for signal quality metadata
-- [ ] **2.1.10** Implement `getWpm()` to read the detected receive speed (WPM) from fldigi
-- [ ] **2.1.11** Add TypeScript type definitions for all fldigi XML-RPC method responses
+- [x] **2.1.1** Add an XML-RPC client library dependency (e.g., `xmlrpc` npm package or implement a minimal client using raw HTTP POST since XML-RPC is simple)
+- [x] **2.1.2** Create an `FldigiClient` class that encapsulates the XML-RPC connection to fldigi
+- [x] **2.1.3** Implement the `connect()` method that validates fldigi is reachable at the configured host:port
+- [x] **2.1.4** Implement `getRxData()` method wrapping fldigi's `main.get_rx_data` (or `text.get_rx` depending on fldigi version — detect which is available)
+- [x] **2.1.5** Implement `getRxText()` as an alternative method for fetching decoded text from the receive buffer
+- [x] **2.1.6** Implement `getVersion()` to query fldigi version and log it on startup for debugging
+- [x] **2.1.7** Implement `getFrequency()` to read the currently tuned frequency from fldigi
+- [x] **2.1.8** Implement `getMode()` to read the current operating mode from fldigi
+- [x] **2.1.9** Implement `getSignalNoiseRatio()` to read the S/N ratio for signal quality metadata
+- [x] **2.1.10** Implement `getWpm()` to read the detected receive speed (WPM) from fldigi
+- [x] **2.1.11** Add TypeScript type definitions for all fldigi XML-RPC method responses
 
 ### 2.2 Polling Loop
 
-- [ ] **2.2.1** Replace the hardcoded test string dispatch in the background service with a polling loop
-- [ ] **2.2.2** The polling loop calls `FldigiClient.getRxData()` at the configured interval (default 250ms)
-- [ ] **2.2.3** Track the last-read position in fldigi's receive buffer to avoid re-reading old data
-- [ ] **2.2.4** Implement a clean start/stop mechanism for the polling loop tied to the service lifecycle
-- [ ] **2.2.5** Add performance logging: log polling latency periodically (e.g., every 60 seconds) to detect bottlenecks
-- [ ] **2.2.6** Ensure the polling loop does not drift — if a poll takes longer than the interval, skip rather than queue up
+- [x] **2.2.1** Replace the hardcoded test string dispatch in the background service with a polling loop
+- [x] **2.2.2** The polling loop calls `FldigiClient.getRxData()` at the configured interval (default 250ms)
+- [x] **2.2.3** Track the last-read position in fldigi's receive buffer to avoid re-reading old data
+- [x] **2.2.4** Implement a clean start/stop mechanism for the polling loop tied to the service lifecycle
+- [x] **2.2.5** Add performance logging: log polling latency periodically (e.g., every 60 seconds) to detect bottlenecks
+- [x] **2.2.6** Ensure the polling loop does not drift — if a poll takes longer than the interval, skip rather than queue up
 
 ### 2.3 Sentence Buffering Logic
 
-- [ ] **2.3.1** Create a `SentenceBuffer` class that accumulates decoded characters from the polling loop
-- [ ] **2.3.2** Implement word boundary detection: fldigi inserts spaces between decoded words based on dit/dah timing
-- [ ] **2.3.3** Implement silence-based flush: if no new characters arrive for a configurable threshold (default 3 seconds), flush the buffer as a complete message
-- [ ] **2.3.4** Implement prosign-based flush: detect `AR` (end of message) and `SK` (end of contact) prosigns and flush immediately when encountered
-- [ ] **2.3.5** Implement `K` (go ahead) detection as a flush trigger — this signals the other station is done transmitting and expects a response
-- [ ] **2.3.6** Implement `KN` (go ahead, named station only) detection as a flush trigger
-- [ ] **2.3.7** Implement `BK` (break) detection as a flush trigger for break-in conversations
-- [ ] **2.3.8** Handle partial words at flush boundaries: if the silence threshold fires mid-word, either wait slightly longer or include the partial
-- [ ] **2.3.9** Strip leading/trailing whitespace and normalize multiple spaces to single spaces in flushed messages
+- [x] **2.3.1** Create a `SentenceBuffer` class that accumulates decoded characters from the polling loop
+- [x] **2.3.2** Implement word boundary detection: fldigi inserts spaces between decoded words based on dit/dah timing
+- [x] **2.3.3** Implement silence-based flush: if no new characters arrive for a configurable threshold (default 3 seconds), flush the buffer as a complete message
+- [x] **2.3.4** Implement prosign-based flush: detect `AR` (end of message) and `SK` (end of contact) prosigns and flush immediately when encountered
+- [x] **2.3.5** Implement `K` (go ahead) detection as a flush trigger — this signals the other station is done transmitting and expects a response
+- [x] **2.3.6** Implement `KN` (go ahead, named station only) detection as a flush trigger
+- [x] **2.3.7** Implement `BK` (break) detection as a flush trigger for break-in conversations
+- [x] **2.3.8** Handle partial words at flush boundaries: if the silence threshold fires mid-word, either wait slightly longer or include the partial
+- [x] **2.3.9** Strip leading/trailing whitespace and normalize multiple spaces to single spaces in flushed messages
 - [ ] **2.3.10** Dispatch the flushed message to the gateway via `api.dispatchInbound({ text, peer, channel })`
 - [ ] **2.3.11** Include metadata with dispatched messages: timestamp, frequency, detected WPM, S/N ratio
 
 ### 2.4 Callsign Extraction
 
-- [ ] **2.4.1** Implement a regex-based callsign pattern matcher that recognizes standard amateur radio callsign formats (prefix + digit + suffix, e.g., `PA3XYZ`, `W1AW`, `VU2ABC`)
-- [ ] **2.4.2** Detect `CQ ... DE <callsign>` patterns in decoded text to identify who is calling
-- [ ] **2.4.3** Detect `<callsign> DE <callsign>` patterns to identify both sides of a QSO
+- [x] **2.4.1** Implement a regex-based callsign pattern matcher that recognizes standard amateur radio callsign formats (prefix + digit + suffix, e.g., `PA3XYZ`, `W1AW`, `VU2ABC`)
+- [x] **2.4.2** Detect `CQ ... DE <callsign>` patterns in decoded text to identify who is calling
+- [x] **2.4.3** Detect `<callsign> DE <callsign>` patterns to identify both sides of a QSO
 - [ ] **2.4.4** Tag the gateway session peer with the extracted callsign so the agent knows who it's talking to
-- [ ] **2.4.5** Handle compound callsigns (e.g., `PA3XYZ/P` for portable, `DL2ABC/MM` for maritime mobile)
+- [x] **2.4.5** Handle compound callsigns (e.g., `PA3XYZ/P` for portable, `DL2ABC/MM` for maritime mobile)
 - [ ] **2.4.6** Handle special event callsigns and contest callsigns that may deviate from standard formats
 
 ### 2.5 Error Handling and Resilience
 
-- [ ] **2.5.1** Implement reconnect logic: if fldigi becomes unreachable, retry with exponential backoff (1s, 2s, 4s, 8s, max 30s)
-- [ ] **2.5.2** Log warnings when fldigi connection is lost, log info when reconnected
-- [ ] **2.5.3** Graceful degradation: if XML-RPC is unavailable, the plugin should remain loaded but inactive, not crash the gateway
-- [ ] **2.5.4** Handle fldigi restart mid-session: detect buffer reset (position jump backward) and re-synchronize
-- [ ] **2.5.5** Handle XML-RPC timeout: set a per-request timeout (e.g., 5 seconds) and treat timeouts as temporary failures
-- [ ] **2.5.6** Emit channel status events to the gateway: `connected`, `disconnected`, `reconnecting`, `error`
+- [x] **2.5.1** Implement reconnect logic: if fldigi becomes unreachable, retry with exponential backoff (1s, 2s, 4s, 8s, max 30s)
+- [x] **2.5.2** Log warnings when fldigi connection is lost, log info when reconnected
+- [x] **2.5.3** Graceful degradation: if XML-RPC is unavailable, the plugin should remain loaded but inactive, not crash the gateway
+- [x] **2.5.4** Handle fldigi restart mid-session: detect buffer reset (position jump backward) and re-synchronize
+- [x] **2.5.5** Handle XML-RPC timeout: set a per-request timeout (e.g., 5 seconds) and treat timeouts as temporary failures
+- [x] **2.5.6** Emit channel status events to the gateway: `connected`, `disconnected`, `reconnecting`, `error`
 
 ### 2.6 Development Tooling for Phase 2
 
-- [ ] **2.6.1** Document how to install fldigi on macOS (`brew install fldigi`) and Linux (`apt install fldigi`)
-- [ ] **2.6.2** Document how to set up a virtual audio device for testing without hardware:
+- [x] **2.6.1** Document how to install fldigi on macOS (`brew install fldigi`) and Linux (`apt install fldigi`)
+- [x] **2.6.2** Document how to set up a virtual audio device for testing without hardware:
   - macOS: BlackHole virtual audio driver
   - Linux: PulseAudio null sink (`pactl load-module module-null-sink`)
-- [ ] **2.6.3** Document how to pipe a WAV file through the virtual audio device into fldigi for testing
-- [ ] **2.6.4** Create a development script that automates the WAV-to-fldigi pipeline for rapid iteration
-- [ ] **2.6.5** Document how to enable fldigi's XML-RPC server (default port 7362) and verify it's running
+- [x] **2.6.3** Document how to pipe a WAV file through the virtual audio device into fldigi for testing
+- [x] **2.6.4** Create a development script that automates the WAV-to-fldigi pipeline for rapid iteration
+- [x] **2.6.5** Document how to enable fldigi's XML-RPC server (default port 7362) and verify it's running
 
 ---
 
@@ -210,60 +210,60 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 4.1 Fldigi TX Integration
 
-- [ ] **4.1.1** Extend `FldigiClient` with a `sendTxText(text: string)` method wrapping fldigi's `main.tx_text` XML-RPC call
-- [ ] **4.1.2** Implement `getTxData()` to read the current TX buffer contents (for verification and testing)
-- [ ] **4.1.3** Implement `abortTx()` to immediately stop transmission via fldigi XML-RPC
-- [ ] **4.1.4** Implement `setTxFrequency(hz: number)` to set the transmit frequency via fldigi
-- [ ] **4.1.5** Implement `setWpm(wpm: number)` to set the transmit speed, matching the detected receive speed
+- [x] **4.1.1** Extend `FldigiClient` with a `sendTxText(text: string)` method wrapping fldigi's `main.tx_text` XML-RPC call
+- [x] **4.1.2** Implement `getTxData()` to read the current TX buffer contents (for verification and testing)
+- [x] **4.1.3** Implement `abortTx()` to immediately stop transmission via fldigi XML-RPC
+- [x] **4.1.4** Implement `setTxFrequency(hz: number)` to set the transmit frequency via fldigi
+- [x] **4.1.5** Implement `setWpm(wpm: number)` to set the transmit speed, matching the detected receive speed
 
 ### 4.2 Outbound.sendText Implementation
 
-- [ ] **4.2.1** Replace the Phase 1 stub `outbound.sendText` with actual fldigi TX integration
-- [ ] **4.2.2** Before transmitting, check that `tx.enabled` is `true` in channel config — refuse to transmit if disabled
-- [ ] **4.2.3** Before transmitting, check that `tx.callsign` is configured — refuse to transmit without a callsign
-- [ ] **4.2.4** Sanitize agent text for CW transmission: strip characters that can't be sent in Morse, uppercase everything
+- [x] **4.2.1** Replace the Phase 1 stub `outbound.sendText` with actual fldigi TX integration
+- [x] **4.2.2** Before transmitting, check that `tx.enabled` is `true` in channel config — refuse to transmit if disabled
+- [x] **4.2.3** Before transmitting, check that `tx.callsign` is configured — refuse to transmit without a callsign
+- [x] **4.2.4** Sanitize agent text for CW transmission: strip characters that can't be sent in Morse, uppercase everything
 - [ ] **4.2.5** Ensure proper CW formatting: add appropriate prosigns (DE, K, AR, SK) based on context
-- [ ] **4.2.6** Push the sanitized text into fldigi's TX buffer via `sendTxText()`
+- [x] **4.2.6** Push the sanitized text into fldigi's TX buffer via `sendTxText()`
 
 ### 4.3 PTT (Push-to-Talk) Control
 
-- [ ] **4.3.1** Implement PTT control via fldigi's built-in CAT/RIG control (fldigi handles PTT when text is in TX buffer)
+- [x] **4.3.1** Implement PTT control via fldigi's built-in CAT/RIG control (fldigi handles PTT when text is in TX buffer)
 - [ ] **4.3.2** Implement fallback PTT via VOX (voice-operated relay — fldigi's audio output triggers the rig's TX)
 - [ ] **4.3.3** Implement fallback PTT via serial DTR/RTS line for rigs that support it
-- [ ] **4.3.4** Add `tx.pttMethod` config field: `"cat"`, `"vox"`, `"serial"`, or `"none"` (for testing without a rig)
+- [x] **4.3.4** Add `tx.pttMethod` config field: `"cat"`, `"vox"`, `"serial"`, or `"none"` (for testing without a rig)
 - [ ] **4.3.5** Verify PTT activates before TX audio starts and deactivates after TX audio ends
 
 ### 4.4 Speed Matching (Critical Operator Etiquette)
 
-- [ ] **4.4.1** Read the detected incoming WPM from fldigi via `getWpm()`
-- [ ] **4.4.2** Before each transmission, set the TX WPM to match or be slightly slower than the detected receive WPM
-- [ ] **4.4.3** This MUST be a hard-coded constraint, not an LLM suggestion — enforce it in the sendText handler before the text reaches fldigi
-- [ ] **4.4.4** If no incoming WPM is detected (e.g., agent is calling CQ), use the configured default `tx.wpm`
-- [ ] **4.4.5** Log the WPM match decision: `"RX detected 22 WPM, setting TX to 20 WPM"`
+- [x] **4.4.1** Read the detected incoming WPM from fldigi via `getWpm()`
+- [x] **4.4.2** Before each transmission, set the TX WPM to match or be slightly slower than the detected receive WPM
+- [x] **4.4.3** This MUST be a hard-coded constraint, not an LLM suggestion — enforce it in the sendText handler before the text reaches fldigi
+- [x] **4.4.4** If no incoming WPM is detected (e.g., agent is calling CQ), use the configured default `tx.wpm`
+- [x] **4.4.5** Log the WPM match decision: `"RX detected 22 WPM, setting TX to 20 WPM"`
 
 ### 4.5 Safety Guards
 
-- [ ] **4.5.1** Implement max TX duration: if a single transmission exceeds `tx.maxDurationSeconds` (default 120s), abort automatically via `abortTx()`
-- [ ] **4.5.2** Implement a TX inhibit flag in config (`tx.inhibit: boolean`) that immediately prevents all transmission when set to `true`
+- [x] **4.5.1** Implement max TX duration: if a single transmission exceeds `tx.maxDurationSeconds` (default 120s), abort automatically via `abortTx()`
+- [x] **4.5.2** Implement a TX inhibit flag in config (`tx.inhibit: boolean`) that immediately prevents all transmission when set to `true`
 - [ ] **4.5.3** Implement a confirmation prompt before the very first transmission of a session — require explicit operator approval
-- [ ] **4.5.4** Implement a `/stop-tx` command (or equivalent OpenClaw Control UI button) that immediately calls `abortTx()` and sets the inhibit flag
-- [ ] **4.5.5** Implement a TX cooldown: minimum gap between consecutive transmissions (e.g., 500ms) to prevent keying issues
-- [ ] **4.5.6** Log every transmission: timestamp, text content, WPM, duration, frequency — for regulatory compliance and debugging
+- [x] **4.5.4** Implement a `/stop-tx` command (or equivalent OpenClaw Control UI button) that immediately calls `abortTx()` and sets the inhibit flag
+- [x] **4.5.5** Implement a TX cooldown: minimum gap between consecutive transmissions (e.g., 500ms) to prevent keying issues
+- [x] **4.5.6** Log every transmission: timestamp, text content, WPM, duration, frequency — for regulatory compliance and debugging
 
 ### 4.6 Legal Identification Timer
 
-- [ ] **4.6.1** Implement a timer that tracks time since last callsign identification was transmitted
-- [ ] **4.6.2** If 10 minutes have elapsed since last ID and the station is transmitting, automatically append the station callsign
+- [x] **4.6.1** Implement a timer that tracks time since last callsign identification was transmitted
+- [x] **4.6.2** If 10 minutes have elapsed since last ID and the station is transmitting, automatically append the station callsign
 - [ ] **4.6.3** Always include the station callsign at the end of each complete communication (QSO end)
-- [ ] **4.6.4** This MUST be a hard-coded timer-based behaviour, NOT left to the LLM's judgment — regulatory requirement
-- [ ] **4.6.5** Log each identification event for compliance records
+- [x] **4.6.4** This MUST be a hard-coded timer-based behaviour, NOT left to the LLM's judgment — regulatory requirement
+- [x] **4.6.5** Log each identification event for compliance records
 
 ### 4.7 Band Manners Enforcement (Hard Constraints)
 
-- [ ] **4.7.1** Before first TX on a frequency, automatically send `QRL?` ("is this frequency in use?") and wait for a response period (configurable, default 5 seconds)
-- [ ] **4.7.2** If a response to `QRL?` is detected (any decoded text during the wait), abort the TX attempt and report to the agent that the frequency is occupied
-- [ ] **4.7.3** Implement a "listen before transmit" guard: require at least N seconds (configurable, default 10s) of receive monitoring before allowing any TX on a new frequency
-- [ ] **4.7.4** Log all band manner checks for debugging
+- [x] **4.7.1** Before first TX on a frequency, automatically send `QRL?` ("is this frequency in use?") and wait for a response period (configurable, default 5 seconds)
+- [x] **4.7.2** If a response to `QRL?` is detected (any decoded text during the wait), abort the TX attempt and report to the agent that the frequency is occupied
+- [x] **4.7.3** Implement a "listen before transmit" guard: require at least N seconds (configurable, default 10s) of receive monitoring before allowing any TX on a new frequency
+- [x] **4.7.4** Log all band manner checks for debugging
 
 ---
 
@@ -273,8 +273,8 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 5a. Protocol Understanding (SOUL.md)
 
-- [ ] **5a.1** Create a `SOUL.md` file for the CW operator agent persona
-- [ ] **5a.2** Document Q-codes with usage context (not just definitions):
+- [x] **5a.1** Create a `SOUL.md` file for the CW operator agent persona
+- [x] **5a.2** Document Q-codes with usage context (not just definitions):
   - `QTH` — "my location is" / "what is your location?"
   - `QSL` — "I confirm receipt" / "do you confirm?"
   - `QRZ` — "who is calling me?"
@@ -289,7 +289,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `QRX` — "wait" / "stand by"
   - `QRP` — "low power operation"
   - And all other commonly used Q-codes
-- [ ] **5a.3** Document prosigns with usage context:
+- [x] **5a.3** Document prosigns with usage context:
   - `K` — "go ahead" (invitation for any station to transmit)
   - `KN` — "go ahead, named station only" (private conversation)
   - `SK` — "end of contact"
@@ -298,19 +298,19 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `CL` — "closing station"
   - `BT` — separator (equivalent to paragraph break)
   - `HH` — "error, disregard previous"
-- [ ] **5a.4** Document standard QSO flow with detailed turn-by-turn examples:
+- [x] **5a.4** Document standard QSO flow with detailed turn-by-turn examples:
   - CQ call format
   - Responding to a CQ
   - Signal report exchange (RST system explained)
   - Name and QTH exchange
   - Equipment/weather/remarks exchange
   - Signoff sequence (73, SK, etc.)
-- [ ] **5a.5** Include examples of complete QSOs at different formality levels:
+- [x] **5a.5** Include examples of complete QSOs at different formality levels:
   - Contest exchange (minimal: callsign + RST + serial/zone)
   - Standard casual QSO (RST, name, QTH, rig, weather)
   - Ragchew / extended QSO (longer conversation, personal details)
   - DX QSO (brief, efficient, often through pileup)
-- [ ] **5a.6** Document common abbreviations used in CW:
+- [x] **5a.6** Document common abbreviations used in CW:
   - `UR` = your, `RST` = readability/strength/tone, `ES` = and, `HR` = here
   - `GM` = good morning, `GA` = good afternoon, `GE` = good evening
   - `73` = best regards (NEVER "73s"), `88` = love and kisses
@@ -319,22 +319,22 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `FB` = fine business (great), `SRI` = sorry, `PSE` = please
   - `HPE` = hope, `CUAGN` = see you again, `WX` = weather
   - `RIG` = equipment, `ANT` = antenna, `PWR` = power
-- [ ] **5a.7** Document when the agent should and shouldn't respond:
+- [x] **5a.7** Document when the agent should and shouldn't respond:
   - DO respond to a CQ if TX is enabled and operator has enabled auto-reply
   - DO respond when directly called (own callsign heard)
   - DO NOT respond to a CQ if TX is disabled (listen-only mode)
   - DO NOT respond if the frequency is in the middle of another QSO
   - DO NOT respond if the QSO is a contest and the agent is not configured for that contest
   - DO NOT transmit on a frequency without checking QRL first
-- [ ] **5a.8** Document the transparency requirement: if the agent transmits, include "OP IS AI ASSISTED" or similar disclosure in the QSO
-- [ ] **5a.9** Document pileup behaviour: do not call into a pileup unless explicitly instructed by the operator
-- [ ] **5a.10** Document the speed-matching etiquette rule in SOUL.md as a behavioral constraint the agent must follow
+- [x] **5a.8** Document the transparency requirement: if the agent transmits, include "OP IS AI ASSISTED" or similar disclosure in the QSO
+- [x] **5a.9** Document pileup behaviour: do not call into a pileup unless explicitly instructed by the operator
+- [x] **5a.10** Document the speed-matching etiquette rule in SOUL.md as a behavioral constraint the agent must follow
 - [ ] **5a.11** Have the SOUL.md reviewed by an experienced CW operator before finalizing (flag this as a human review task)
 
 ### 5b. Contact Logging (ADIF)
 
-- [ ] **5b.1** Implement an ADIF (Amateur Data Interchange Format) file writer module
-- [ ] **5b.2** Support the following ADIF fields:
+- [x] **5b.1** Implement an ADIF (Amateur Data Interchange Format) file writer module
+- [x] **5b.2** Support the following ADIF fields:
   - `<CALL>` — contacted station's callsign
   - `<QSO_DATE>` — date of contact (YYYYMMDD)
   - `<TIME_ON>` — start time of contact (HHMMSS UTC)
@@ -352,20 +352,20 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `<CONTEST_ID>` — contest identifier (if applicable)
   - `<SRX>` — received serial number (contest)
   - `<STX>` — sent serial number (contest)
-- [ ] **5b.3** Implement ADIF field encoding: `<FIELDNAME:LENGTH>VALUE` format (e.g., `<CALL:6>DL2ABC`)
-- [ ] **5b.4** Implement ADIF file header with `<ADIF_VER:5>3.1.4` and `<PROGRAMID>` and `<EOH>` marker
-- [ ] **5b.5** Implement append-mode writing: new QSOs are appended to the log file, each terminated by `<EOR>` (end of record)
+- [x] **5b.3** Implement ADIF field encoding: `<FIELDNAME:LENGTH>VALUE` format (e.g., `<CALL:6>DL2ABC`)
+- [x] **5b.4** Implement ADIF file header with `<ADIF_VER:5>3.1.4` and `<PROGRAMID>` and `<EOH>` marker
+- [x] **5b.5** Implement append-mode writing: new QSOs are appended to the log file, each terminated by `<EOR>` (end of record)
 - [ ] **5b.6** Implement the QSO field extractor: given a decoded conversation transcript, use the LLM (via agent tool or structured extraction) to extract:
   - Callsign of the other station
   - RST sent and received
   - Name
   - QTH
   - Any additional exchanged information
-- [ ] **5b.7** Derive band from frequency automatically (e.g., 7.030 MHz → `40m`)
-- [ ] **5b.8** Record QSO start/end timestamps from message dispatch times
-- [ ] **5b.9** Implement dupe detection: check if the same callsign has already been worked on the same band (and optionally same mode)
+- [x] **5b.7** Derive band from frequency automatically (e.g., 7.030 MHz → `40m`)
+- [x] **5b.8** Record QSO start/end timestamps from message dispatch times
+- [x] **5b.9** Implement dupe detection: check if the same callsign has already been worked on the same band (and optionally same mode)
 - [ ] **5b.10** Flag dupes visually in agent responses and in the log
-- [ ] **5b.11** Store the ADIF log file at a configurable path (default: `~/.openclaw/cqlaw/log.adi`)
+- [x] **5b.11** Store the ADIF log file at a configurable path (default: `~/.openclaw/cqlaw/log.adi`)
 - [ ] **5b.12** Implement log rotation or archival (optional): create a new log file per day/month or when size exceeds a threshold
 - [ ] **5b.13** Implement export to external logging software APIs (optional/future):
   - Cloudlog API integration
@@ -469,17 +469,17 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 ### 5f. Error Correction and Context
 
 - [ ] **5f.1** Implement fuzzy callsign matching: when fldigi decodes a callsign with uncertain characters (e.g., `PA3X?Z`), query the QRZ database for likely matches
-- [ ] **5f.2** Implement Levenshtein distance or similar edit-distance matching for callsign candidates
+- [x] **5f.2** Implement Levenshtein distance or similar edit-distance matching for callsign candidates
 - [ ] **5f.3** Implement contextual reconstruction for common fields:
   - RST: if decoded as `5?9`, infer `599` (the most common report)
   - Zone numbers: cross-reference with callsign prefix to validate
   - Serial numbers: should be monotonically increasing in contests
-- [ ] **5f.4** Implement confidence scoring for each extracted field:
+- [x] **5f.4** Implement confidence scoring for each extracted field:
   - `high` — decoded clearly with no ambiguity
   - `medium` — decoded with minor uncertainty, contextually resolved
   - `low` — significant uncertainty, flagged for human review
 - [ ] **5f.5** Flag low-confidence fields visually in the log and agent responses
-- [ ] **5f.6** Implement cross-repetition aggregation: CW operators typically send their callsign 2-3 times — aggregate across repetitions to build confidence
+- [x] **5f.6** Implement cross-repetition aggregation: CW operators typically send their callsign 2-3 times — aggregate across repetitions to build confidence
   - If first decode is `DL2A?C` and second is `DL2AB?`, merge to `DL2ABC`
 - [ ] **5f.7** Implement context-aware noise filtering: strip common decode artifacts (random characters from noise bursts, garbled prosigns)
 - [ ] **5f.8** Implement a "decode confidence" metric for entire messages based on the proportion of high-confidence vs low-confidence characters
@@ -699,4 +699,4 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - Minimal: decode + log only (operator does all TX)
   - Moderate: decode + log + suggest responses (operator approves before TX)
   - Full: decode + log + auto-respond (operator monitors, can intervene)
-- [ ] **OQ.6** Evaluate whether to use an existing XML-RPC npm package or write a minimal client (fldigi's XML-RPC surface is small enough that a custom client may be simpler and have fewer dependencies).
+- [x] **OQ.6** Evaluate whether to use an existing XML-RPC npm package or write a minimal client (fldigi's XML-RPC surface is small enough that a custom client may be simpler and have fewer dependencies). **Decision: custom client in `src/xmlrpc.ts` — zero dependencies, ~130 lines.**
