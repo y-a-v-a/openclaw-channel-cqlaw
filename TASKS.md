@@ -273,8 +273,8 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 5a. Protocol Understanding (SOUL.md)
 
-- [ ] **5a.1** Create a `SOUL.md` file for the CW operator agent persona
-- [ ] **5a.2** Document Q-codes with usage context (not just definitions):
+- [x] **5a.1** Create a `SOUL.md` file for the CW operator agent persona
+- [x] **5a.2** Document Q-codes with usage context (not just definitions):
   - `QTH` — "my location is" / "what is your location?"
   - `QSL` — "I confirm receipt" / "do you confirm?"
   - `QRZ` — "who is calling me?"
@@ -289,7 +289,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `QRX` — "wait" / "stand by"
   - `QRP` — "low power operation"
   - And all other commonly used Q-codes
-- [ ] **5a.3** Document prosigns with usage context:
+- [x] **5a.3** Document prosigns with usage context:
   - `K` — "go ahead" (invitation for any station to transmit)
   - `KN` — "go ahead, named station only" (private conversation)
   - `SK` — "end of contact"
@@ -298,19 +298,19 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `CL` — "closing station"
   - `BT` — separator (equivalent to paragraph break)
   - `HH` — "error, disregard previous"
-- [ ] **5a.4** Document standard QSO flow with detailed turn-by-turn examples:
+- [x] **5a.4** Document standard QSO flow with detailed turn-by-turn examples:
   - CQ call format
   - Responding to a CQ
   - Signal report exchange (RST system explained)
   - Name and QTH exchange
   - Equipment/weather/remarks exchange
   - Signoff sequence (73, SK, etc.)
-- [ ] **5a.5** Include examples of complete QSOs at different formality levels:
+- [x] **5a.5** Include examples of complete QSOs at different formality levels:
   - Contest exchange (minimal: callsign + RST + serial/zone)
   - Standard casual QSO (RST, name, QTH, rig, weather)
   - Ragchew / extended QSO (longer conversation, personal details)
   - DX QSO (brief, efficient, often through pileup)
-- [ ] **5a.6** Document common abbreviations used in CW:
+- [x] **5a.6** Document common abbreviations used in CW:
   - `UR` = your, `RST` = readability/strength/tone, `ES` = and, `HR` = here
   - `GM` = good morning, `GA` = good afternoon, `GE` = good evening
   - `73` = best regards (NEVER "73s"), `88` = love and kisses
@@ -319,22 +319,22 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `FB` = fine business (great), `SRI` = sorry, `PSE` = please
   - `HPE` = hope, `CUAGN` = see you again, `WX` = weather
   - `RIG` = equipment, `ANT` = antenna, `PWR` = power
-- [ ] **5a.7** Document when the agent should and shouldn't respond:
+- [x] **5a.7** Document when the agent should and shouldn't respond:
   - DO respond to a CQ if TX is enabled and operator has enabled auto-reply
   - DO respond when directly called (own callsign heard)
   - DO NOT respond to a CQ if TX is disabled (listen-only mode)
   - DO NOT respond if the frequency is in the middle of another QSO
   - DO NOT respond if the QSO is a contest and the agent is not configured for that contest
   - DO NOT transmit on a frequency without checking QRL first
-- [ ] **5a.8** Document the transparency requirement: if the agent transmits, include "OP IS AI ASSISTED" or similar disclosure in the QSO
-- [ ] **5a.9** Document pileup behaviour: do not call into a pileup unless explicitly instructed by the operator
-- [ ] **5a.10** Document the speed-matching etiquette rule in SOUL.md as a behavioral constraint the agent must follow
+- [x] **5a.8** Document the transparency requirement: if the agent transmits, include "OP IS AI ASSISTED" or similar disclosure in the QSO
+- [x] **5a.9** Document pileup behaviour: do not call into a pileup unless explicitly instructed by the operator
+- [x] **5a.10** Document the speed-matching etiquette rule in SOUL.md as a behavioral constraint the agent must follow
 - [ ] **5a.11** Have the SOUL.md reviewed by an experienced CW operator before finalizing (flag this as a human review task)
 
 ### 5b. Contact Logging (ADIF)
 
-- [ ] **5b.1** Implement an ADIF (Amateur Data Interchange Format) file writer module
-- [ ] **5b.2** Support the following ADIF fields:
+- [x] **5b.1** Implement an ADIF (Amateur Data Interchange Format) file writer module
+- [x] **5b.2** Support the following ADIF fields:
   - `<CALL>` — contacted station's callsign
   - `<QSO_DATE>` — date of contact (YYYYMMDD)
   - `<TIME_ON>` — start time of contact (HHMMSS UTC)
@@ -352,20 +352,20 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `<CONTEST_ID>` — contest identifier (if applicable)
   - `<SRX>` — received serial number (contest)
   - `<STX>` — sent serial number (contest)
-- [ ] **5b.3** Implement ADIF field encoding: `<FIELDNAME:LENGTH>VALUE` format (e.g., `<CALL:6>DL2ABC`)
-- [ ] **5b.4** Implement ADIF file header with `<ADIF_VER:5>3.1.4` and `<PROGRAMID>` and `<EOH>` marker
-- [ ] **5b.5** Implement append-mode writing: new QSOs are appended to the log file, each terminated by `<EOR>` (end of record)
+- [x] **5b.3** Implement ADIF field encoding: `<FIELDNAME:LENGTH>VALUE` format (e.g., `<CALL:6>DL2ABC`)
+- [x] **5b.4** Implement ADIF file header with `<ADIF_VER:5>3.1.4` and `<PROGRAMID>` and `<EOH>` marker
+- [x] **5b.5** Implement append-mode writing: new QSOs are appended to the log file, each terminated by `<EOR>` (end of record)
 - [ ] **5b.6** Implement the QSO field extractor: given a decoded conversation transcript, use the LLM (via agent tool or structured extraction) to extract:
   - Callsign of the other station
   - RST sent and received
   - Name
   - QTH
   - Any additional exchanged information
-- [ ] **5b.7** Derive band from frequency automatically (e.g., 7.030 MHz → `40m`)
-- [ ] **5b.8** Record QSO start/end timestamps from message dispatch times
-- [ ] **5b.9** Implement dupe detection: check if the same callsign has already been worked on the same band (and optionally same mode)
+- [x] **5b.7** Derive band from frequency automatically (e.g., 7.030 MHz → `40m`)
+- [x] **5b.8** Record QSO start/end timestamps from message dispatch times
+- [x] **5b.9** Implement dupe detection: check if the same callsign has already been worked on the same band (and optionally same mode)
 - [ ] **5b.10** Flag dupes visually in agent responses and in the log
-- [ ] **5b.11** Store the ADIF log file at a configurable path (default: `~/.openclaw/cqlaw/log.adi`)
+- [x] **5b.11** Store the ADIF log file at a configurable path (default: `~/.openclaw/cqlaw/log.adi`)
 - [ ] **5b.12** Implement log rotation or archival (optional): create a new log file per day/month or when size exceeds a threshold
 - [ ] **5b.13** Implement export to external logging software APIs (optional/future):
   - Cloudlog API integration
@@ -469,17 +469,17 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 ### 5f. Error Correction and Context
 
 - [ ] **5f.1** Implement fuzzy callsign matching: when fldigi decodes a callsign with uncertain characters (e.g., `PA3X?Z`), query the QRZ database for likely matches
-- [ ] **5f.2** Implement Levenshtein distance or similar edit-distance matching for callsign candidates
+- [x] **5f.2** Implement Levenshtein distance or similar edit-distance matching for callsign candidates
 - [ ] **5f.3** Implement contextual reconstruction for common fields:
   - RST: if decoded as `5?9`, infer `599` (the most common report)
   - Zone numbers: cross-reference with callsign prefix to validate
   - Serial numbers: should be monotonically increasing in contests
-- [ ] **5f.4** Implement confidence scoring for each extracted field:
+- [x] **5f.4** Implement confidence scoring for each extracted field:
   - `high` — decoded clearly with no ambiguity
   - `medium` — decoded with minor uncertainty, contextually resolved
   - `low` — significant uncertainty, flagged for human review
 - [ ] **5f.5** Flag low-confidence fields visually in the log and agent responses
-- [ ] **5f.6** Implement cross-repetition aggregation: CW operators typically send their callsign 2-3 times — aggregate across repetitions to build confidence
+- [x] **5f.6** Implement cross-repetition aggregation: CW operators typically send their callsign 2-3 times — aggregate across repetitions to build confidence
   - If first decode is `DL2A?C` and second is `DL2AB?`, merge to `DL2ABC`
 - [ ] **5f.7** Implement context-aware noise filtering: strip common decode artifacts (random characters from noise bursts, garbled prosigns)
 - [ ] **5f.8** Implement a "decode confidence" metric for entire messages based on the proportion of high-confidence vs low-confidence characters
