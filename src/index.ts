@@ -4,6 +4,7 @@
  */
 
 import type { OpenClawApi } from "./openclaw-api.js";
+import { resolveConfig } from "./config.js";
 import { createSendTextHandler } from "./outbound.js";
 import { createService } from "./service.js";
 
@@ -18,6 +19,8 @@ const CHANNEL_DEFINITION = {
 export function register(api: OpenClawApi): void {
   console.log("[cqlaw] Registering morse-radio channel");
 
+  const config = resolveConfig({});
+
   // TX stub for now — the service will replace this with a real Transmitter
   // once the fldigi connection is established
   const sendText = createSendTextHandler(null);
@@ -26,7 +29,7 @@ export function register(api: OpenClawApi): void {
     sendText,
   });
 
-  const service = createService(api);
+  const service = createService(api, config);
   api.registerService(service);
 
   console.log("[cqlaw] Registration complete");

@@ -178,12 +178,21 @@ export class FldigiPoller {
   }
 
   /** Called by SentenceBuffer when a complete message is ready */
-  private handleFlush(message: string): void {
+  private async handleFlush(message: string): Promise<void> {
     const metadata: Record<string, unknown> = {
       timestamp: new Date().toISOString(),
       frequency: this.config.frequency,
       channel: CHANNEL_ID,
     };
+
+    // Best-effort enrichment — don't block dispatch if these fail
+    try {
+      metadata.wpm = await this.client.getWpm();
+    } catch { /* fldigi may not support this or be temporarily unreachable */ }
+
+    try {
+      metadata.snr = await this.client.getSignalNoiseRatio();
+    } catch { /* same */ }
 
     this.callbacks.onMessage(message, this.currentPeer, metadata);
   }
