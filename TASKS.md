@@ -222,7 +222,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **4.2.2** Before transmitting, check that `tx.enabled` is `true` in channel config — refuse to transmit if disabled
 - [x] **4.2.3** Before transmitting, check that `tx.callsign` is configured — refuse to transmit without a callsign
 - [x] **4.2.4** Sanitize agent text for CW transmission: strip characters that can't be sent in Morse, uppercase everything
-- [ ] **4.2.5** Ensure proper CW formatting: add appropriate prosigns (DE, K, AR, SK) based on context
+- [x] **4.2.5** Ensure proper CW formatting: add appropriate prosigns (DE, K, AR, SK) based on context
 - [x] **4.2.6** Push the sanitized text into fldigi's TX buffer via `sendTxText()`
 
 ### 4.3 PTT (Push-to-Talk) Control
