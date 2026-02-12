@@ -15,6 +15,7 @@
 
 import { FldigiClient } from "./fldigi-client.js";
 import { sanitizeForCw } from "./cw-sanitize.js";
+import { formatForCw, type TxIntent } from "./cw-format.js";
 import type { ChannelConfig } from "./config.js";
 
 /** Minimum gap between consecutive transmissions (ms) */
@@ -104,9 +105,9 @@ export class Transmitter {
 
   /**
    * Transmit text as CW via fldigi.
-   * Applies all safety checks, sanitization, speed matching, and legal ID.
+   * Applies all safety checks, sanitization, formatting, speed matching, and legal ID.
    */
-  async send(text: string, detectedRxWpm?: number): Promise<TransmitResult> {
+  async send(text: string, detectedRxWpm?: number, intent?: TxIntent, peerCall?: string): Promise<TransmitResult> {
     // --- Pre-flight safety checks ---
 
     const preflight = this.preflightChecks();
@@ -126,6 +127,9 @@ export class Transmitter {
       return { success: false, error: "Text is empty after sanitization" };
     }
 
+    // --- CW formatting (addressing + closing prosign) ---
+    const formatted = formatForCw(sanitized, intent ?? "default", this.config.tx.callsign, peerCall);
+
     // --- Speed matching (hard constraint) ---
     const txWpm = this.resolveWpm(detectedRxWpm);
     try {
@@ -135,7 +139,7 @@ export class Transmitter {
     }
 
     // --- Legal ID check — append callsign if overdue ---
-    let finalText = sanitized;
+    let finalText = formatted;
     const idNeeded = this.isLegalIdDue();
     if (idNeeded) {
       finalText = `${finalText} DE ${this.config.tx.callsign}`;

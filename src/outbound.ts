@@ -5,6 +5,7 @@
 
 import type { OutboundMessage, SendResult } from "./openclaw-api.js";
 import type { Transmitter } from "./transmitter.js";
+import type { TxIntent } from "./cw-format.js";
 
 /**
  * Create an outbound sendText handler bound to a Transmitter instance.
@@ -23,7 +24,9 @@ export function createSendTextHandler(
 
   return async (message: OutboundMessage): Promise<SendResult> => {
     const rxWpm = getDetectedWpm?.();
-    const result = await transmitter.send(message.text, rxWpm);
+    const intent = (message.metadata?.txIntent as TxIntent) ?? "default";
+    const peerCall = message.peer;
+    const result = await transmitter.send(message.text, rxWpm, intent, peerCall);
     return { success: result.success, error: result.error };
   };
 }

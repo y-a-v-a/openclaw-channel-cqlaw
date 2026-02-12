@@ -25,6 +25,7 @@ export interface OutboundMessage {
   text: string;
   peer: string;
   channel: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SendResult {
