@@ -210,60 +210,60 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 4.1 Fldigi TX Integration
 
-- [ ] **4.1.1** Extend `FldigiClient` with a `sendTxText(text: string)` method wrapping fldigi's `main.tx_text` XML-RPC call
-- [ ] **4.1.2** Implement `getTxData()` to read the current TX buffer contents (for verification and testing)
-- [ ] **4.1.3** Implement `abortTx()` to immediately stop transmission via fldigi XML-RPC
-- [ ] **4.1.4** Implement `setTxFrequency(hz: number)` to set the transmit frequency via fldigi
-- [ ] **4.1.5** Implement `setWpm(wpm: number)` to set the transmit speed, matching the detected receive speed
+- [x] **4.1.1** Extend `FldigiClient` with a `sendTxText(text: string)` method wrapping fldigi's `main.tx_text` XML-RPC call
+- [x] **4.1.2** Implement `getTxData()` to read the current TX buffer contents (for verification and testing)
+- [x] **4.1.3** Implement `abortTx()` to immediately stop transmission via fldigi XML-RPC
+- [x] **4.1.4** Implement `setTxFrequency(hz: number)` to set the transmit frequency via fldigi
+- [x] **4.1.5** Implement `setWpm(wpm: number)` to set the transmit speed, matching the detected receive speed
 
 ### 4.2 Outbound.sendText Implementation
 
-- [ ] **4.2.1** Replace the Phase 1 stub `outbound.sendText` with actual fldigi TX integration
-- [ ] **4.2.2** Before transmitting, check that `tx.enabled` is `true` in channel config — refuse to transmit if disabled
-- [ ] **4.2.3** Before transmitting, check that `tx.callsign` is configured — refuse to transmit without a callsign
-- [ ] **4.2.4** Sanitize agent text for CW transmission: strip characters that can't be sent in Morse, uppercase everything
+- [x] **4.2.1** Replace the Phase 1 stub `outbound.sendText` with actual fldigi TX integration
+- [x] **4.2.2** Before transmitting, check that `tx.enabled` is `true` in channel config — refuse to transmit if disabled
+- [x] **4.2.3** Before transmitting, check that `tx.callsign` is configured — refuse to transmit without a callsign
+- [x] **4.2.4** Sanitize agent text for CW transmission: strip characters that can't be sent in Morse, uppercase everything
 - [ ] **4.2.5** Ensure proper CW formatting: add appropriate prosigns (DE, K, AR, SK) based on context
-- [ ] **4.2.6** Push the sanitized text into fldigi's TX buffer via `sendTxText()`
+- [x] **4.2.6** Push the sanitized text into fldigi's TX buffer via `sendTxText()`
 
 ### 4.3 PTT (Push-to-Talk) Control
 
-- [ ] **4.3.1** Implement PTT control via fldigi's built-in CAT/RIG control (fldigi handles PTT when text is in TX buffer)
+- [x] **4.3.1** Implement PTT control via fldigi's built-in CAT/RIG control (fldigi handles PTT when text is in TX buffer)
 - [ ] **4.3.2** Implement fallback PTT via VOX (voice-operated relay — fldigi's audio output triggers the rig's TX)
 - [ ] **4.3.3** Implement fallback PTT via serial DTR/RTS line for rigs that support it
-- [ ] **4.3.4** Add `tx.pttMethod` config field: `"cat"`, `"vox"`, `"serial"`, or `"none"` (for testing without a rig)
+- [x] **4.3.4** Add `tx.pttMethod` config field: `"cat"`, `"vox"`, `"serial"`, or `"none"` (for testing without a rig)
 - [ ] **4.3.5** Verify PTT activates before TX audio starts and deactivates after TX audio ends
 
 ### 4.4 Speed Matching (Critical Operator Etiquette)
 
-- [ ] **4.4.1** Read the detected incoming WPM from fldigi via `getWpm()`
-- [ ] **4.4.2** Before each transmission, set the TX WPM to match or be slightly slower than the detected receive WPM
-- [ ] **4.4.3** This MUST be a hard-coded constraint, not an LLM suggestion — enforce it in the sendText handler before the text reaches fldigi
-- [ ] **4.4.4** If no incoming WPM is detected (e.g., agent is calling CQ), use the configured default `tx.wpm`
-- [ ] **4.4.5** Log the WPM match decision: `"RX detected 22 WPM, setting TX to 20 WPM"`
+- [x] **4.4.1** Read the detected incoming WPM from fldigi via `getWpm()`
+- [x] **4.4.2** Before each transmission, set the TX WPM to match or be slightly slower than the detected receive WPM
+- [x] **4.4.3** This MUST be a hard-coded constraint, not an LLM suggestion — enforce it in the sendText handler before the text reaches fldigi
+- [x] **4.4.4** If no incoming WPM is detected (e.g., agent is calling CQ), use the configured default `tx.wpm`
+- [x] **4.4.5** Log the WPM match decision: `"RX detected 22 WPM, setting TX to 20 WPM"`
 
 ### 4.5 Safety Guards
 
-- [ ] **4.5.1** Implement max TX duration: if a single transmission exceeds `tx.maxDurationSeconds` (default 120s), abort automatically via `abortTx()`
-- [ ] **4.5.2** Implement a TX inhibit flag in config (`tx.inhibit: boolean`) that immediately prevents all transmission when set to `true`
+- [x] **4.5.1** Implement max TX duration: if a single transmission exceeds `tx.maxDurationSeconds` (default 120s), abort automatically via `abortTx()`
+- [x] **4.5.2** Implement a TX inhibit flag in config (`tx.inhibit: boolean`) that immediately prevents all transmission when set to `true`
 - [ ] **4.5.3** Implement a confirmation prompt before the very first transmission of a session — require explicit operator approval
-- [ ] **4.5.4** Implement a `/stop-tx` command (or equivalent OpenClaw Control UI button) that immediately calls `abortTx()` and sets the inhibit flag
-- [ ] **4.5.5** Implement a TX cooldown: minimum gap between consecutive transmissions (e.g., 500ms) to prevent keying issues
-- [ ] **4.5.6** Log every transmission: timestamp, text content, WPM, duration, frequency — for regulatory compliance and debugging
+- [x] **4.5.4** Implement a `/stop-tx` command (or equivalent OpenClaw Control UI button) that immediately calls `abortTx()` and sets the inhibit flag
+- [x] **4.5.5** Implement a TX cooldown: minimum gap between consecutive transmissions (e.g., 500ms) to prevent keying issues
+- [x] **4.5.6** Log every transmission: timestamp, text content, WPM, duration, frequency — for regulatory compliance and debugging
 
 ### 4.6 Legal Identification Timer
 
-- [ ] **4.6.1** Implement a timer that tracks time since last callsign identification was transmitted
-- [ ] **4.6.2** If 10 minutes have elapsed since last ID and the station is transmitting, automatically append the station callsign
+- [x] **4.6.1** Implement a timer that tracks time since last callsign identification was transmitted
+- [x] **4.6.2** If 10 minutes have elapsed since last ID and the station is transmitting, automatically append the station callsign
 - [ ] **4.6.3** Always include the station callsign at the end of each complete communication (QSO end)
-- [ ] **4.6.4** This MUST be a hard-coded timer-based behaviour, NOT left to the LLM's judgment — regulatory requirement
-- [ ] **4.6.5** Log each identification event for compliance records
+- [x] **4.6.4** This MUST be a hard-coded timer-based behaviour, NOT left to the LLM's judgment — regulatory requirement
+- [x] **4.6.5** Log each identification event for compliance records
 
 ### 4.7 Band Manners Enforcement (Hard Constraints)
 
-- [ ] **4.7.1** Before first TX on a frequency, automatically send `QRL?` ("is this frequency in use?") and wait for a response period (configurable, default 5 seconds)
-- [ ] **4.7.2** If a response to `QRL?` is detected (any decoded text during the wait), abort the TX attempt and report to the agent that the frequency is occupied
-- [ ] **4.7.3** Implement a "listen before transmit" guard: require at least N seconds (configurable, default 10s) of receive monitoring before allowing any TX on a new frequency
-- [ ] **4.7.4** Log all band manner checks for debugging
+- [x] **4.7.1** Before first TX on a frequency, automatically send `QRL?` ("is this frequency in use?") and wait for a response period (configurable, default 5 seconds)
+- [x] **4.7.2** If a response to `QRL?` is detected (any decoded text during the wait), abort the TX attempt and report to the agent that the frequency is occupied
+- [x] **4.7.3** Implement a "listen before transmit" guard: require at least N seconds (configurable, default 10s) of receive monitoring before allowing any TX on a new frequency
+- [x] **4.7.4** Log all band manner checks for debugging
 
 ---
 

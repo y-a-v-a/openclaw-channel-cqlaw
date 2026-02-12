@@ -120,9 +120,9 @@ export class FldigiClient {
     await this.rpc.call("main.abort");
   }
 
-  /** Set the transmit speed in WPM. */
+  /** Set the CW transmit/receive speed in WPM. */
   async setWpm(wpm: number): Promise<void> {
-    await this.rpc.call("modem.set_carrier", wpm);
+    await this.rpc.call("modem.set_wpm", wpm);
   }
 
   /** Trigger TX (start transmitting what's in the buffer). */
