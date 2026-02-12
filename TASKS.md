@@ -130,13 +130,13 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 2.6 Development Tooling for Phase 2
 
-- [ ] **2.6.1** Document how to install fldigi on macOS (`brew install fldigi`) and Linux (`apt install fldigi`)
-- [ ] **2.6.2** Document how to set up a virtual audio device for testing without hardware:
+- [x] **2.6.1** Document how to install fldigi on macOS (`brew install fldigi`) and Linux (`apt install fldigi`)
+- [x] **2.6.2** Document how to set up a virtual audio device for testing without hardware:
   - macOS: BlackHole virtual audio driver
   - Linux: PulseAudio null sink (`pactl load-module module-null-sink`)
-- [ ] **2.6.3** Document how to pipe a WAV file through the virtual audio device into fldigi for testing
-- [ ] **2.6.4** Create a development script that automates the WAV-to-fldigi pipeline for rapid iteration
-- [ ] **2.6.5** Document how to enable fldigi's XML-RPC server (default port 7362) and verify it's running
+- [x] **2.6.3** Document how to pipe a WAV file through the virtual audio device into fldigi for testing
+- [x] **2.6.4** Create a development script that automates the WAV-to-fldigi pipeline for rapid iteration
+- [x] **2.6.5** Document how to enable fldigi's XML-RPC server (default port 7362) and verify it's running
 
 ---
 

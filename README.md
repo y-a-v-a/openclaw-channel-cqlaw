@@ -56,6 +56,8 @@ npm run build
 npm test
 ```
 
+For testing with fldigi and virtual audio (no radio hardware needed), see the full **[Development Guide](docs/development.md)** — covers fldigi installation, virtual audio setup, and the WAV-to-decode pipeline.
+
 ## Architecture
 
 ```
@@ -77,16 +79,20 @@ OpenClaw Gateway → Agent session
 
 ```
 src/
-  index.ts          — Plugin entry point, registers channel and service
-  config.ts         — Channel configuration schema, defaults, validation
-  openclaw-api.ts   — OpenClaw Gateway API type definitions
-  outbound.ts       — Outbound message handler (TX stub → future fldigi TX)
-  service.ts        — Background service (test message → future fldigi polling)
-test/
-  config.test.ts    — Config validation and defaults tests
-  outbound.test.ts  — Outbound handler tests
-  service.test.ts   — Background service lifecycle tests
-  register.test.ts  — Plugin registration tests
+  index.ts            — Plugin entry point, registers channel and service
+  config.ts           — Channel configuration schema, defaults, validation
+  openclaw-api.ts     — OpenClaw Gateway API type definitions
+  outbound.ts         — Outbound message handler (TX stub → future fldigi TX)
+  service.ts          — Background service (test message → future fldigi polling)
+  xmlrpc.ts           — Zero-dependency XML-RPC client (Node built-in http)
+  fldigi-client.ts    — Typed wrapper for fldigi's XML-RPC API
+  fldigi-poller.ts    — Polling loop: fldigi → SentenceBuffer → callsign → dispatch
+  sentence-buffer.ts  — Accumulates decoded CW, flushes on prosign or silence
+  callsign.ts         — Amateur radio callsign pattern extraction
+scripts/
+  play-wav-to-fldigi.sh — Play a WAV into fldigi via virtual audio, show decoded text
+docs/
+  development.md      — Full dev setup guide (fldigi, virtual audio, testing workflow)
 ```
 
 ## License
