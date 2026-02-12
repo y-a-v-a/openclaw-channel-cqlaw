@@ -10,39 +10,39 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 1.1 Project Initialization
 
-- [ ] **1.1.1** Initialize the project with `package.json` including `openclaw.extensions` entry point field
-- [ ] **1.1.2** Set up TypeScript configuration (`tsconfig.json`) targeting the OpenClaw plugin runtime (jiti, no compile step required)
-- [ ] **1.1.3** Create `openclaw.plugin.json` manifest declaring the plugin name (`cqlaw`), version, and capabilities
+- [x] **1.1.1** Initialize the project with `package.json` including `openclaw.extensions` entry point field
+- [x] **1.1.2** Set up TypeScript configuration (`tsconfig.json`) targeting the OpenClaw plugin runtime (jiti, no compile step required)
+- [x] **1.1.3** Create `openclaw.plugin.json` manifest declaring the plugin name (`cqlaw`), version, and capabilities
 - [ ] **1.1.4** Set up linting (ESLint) and formatting (Prettier) configuration
-- [ ] **1.1.5** Set up the `test/` directory structure with a test runner (vitest or jest)
-- [ ] **1.1.6** Create a `.gitignore` covering `node_modules/`, `dist/`, and any local config files
-- [ ] **1.1.7** Add a `README.md` with basic project description, prerequisites, and install instructions
+- [x] **1.1.5** Set up the `test/` directory structure with a test runner (vitest or jest)
+- [x] **1.1.6** Create a `.gitignore` covering `node_modules/`, `dist/`, and any local config files
+- [x] **1.1.7** Add a `README.md` with basic project description, prerequisites, and install instructions
 
 ### 1.2 Channel Registration
 
-- [ ] **1.2.1** Implement the `register()` entry function that the OpenClaw gateway calls on plugin load
-- [ ] **1.2.2** Inside `register()`, call `api.registerChannel()` with a `morse-radio` channel definition
-- [ ] **1.2.3** Set channel capabilities to `direct` chat type only (no groups — radio is modeled as 1:1 session per frequency)
-- [ ] **1.2.4** Define the channel's metadata: name, description, icon identifier, and supported message types (text only initially)
+- [x] **1.2.1** Implement the `register()` entry function that the OpenClaw gateway calls on plugin load
+- [x] **1.2.2** Inside `register()`, call `api.registerChannel()` with a `morse-radio` channel definition
+- [x] **1.2.3** Set channel capabilities to `direct` chat type only (no groups — radio is modeled as 1:1 session per frequency)
+- [x] **1.2.4** Define the channel's metadata: name, description, icon identifier, and supported message types (text only initially)
 
 ### 1.3 Outbound Message Handler (Stub)
 
-- [ ] **1.3.1** Implement the `outbound.sendText` handler function
-- [ ] **1.3.2** For Phase 1, this handler should log the agent's text response to console/gateway logs with a prefix like `[CW-TX-STUB]`
-- [ ] **1.3.3** Include a placeholder comment/TODO marking where future fldigi `main.tx_text` XML-RPC calls will go
-- [ ] **1.3.4** Return a success acknowledgment to the gateway so the message flow completes cleanly
+- [x] **1.3.1** Implement the `outbound.sendText` handler function
+- [x] **1.3.2** For Phase 1, this handler should log the agent's text response to console/gateway logs with a prefix like `[CW-TX-STUB]`
+- [x] **1.3.3** Include a placeholder comment/TODO marking where future fldigi `main.tx_text` XML-RPC calls will go
+- [x] **1.3.4** Return a success acknowledgment to the gateway so the message flow completes cleanly
 
 ### 1.4 Background Service Stub
 
-- [ ] **1.4.1** Create a background service class/module to be registered via `api.registerService()`
-- [ ] **1.4.2** Implement the service lifecycle methods: `start()`, `stop()`, and any health-check hooks the gateway expects
-- [ ] **1.4.3** In the `start()` method, push a hardcoded test string (`"CQ CQ DE PI4ABC"`) into the gateway session as an inbound message using `api.dispatchInbound({ text, peer, channel })`
-- [ ] **1.4.4** Confirm the test string arrives in the agent session by checking gateway logs
-- [ ] **1.4.5** Add a configurable delay before dispatching the test string (e.g., 2 seconds after service start) to allow the gateway to fully initialize
+- [x] **1.4.1** Create a background service class/module to be registered via `api.registerService()`
+- [x] **1.4.2** Implement the service lifecycle methods: `start()`, `stop()`, and any health-check hooks the gateway expects
+- [x] **1.4.3** In the `start()` method, push a hardcoded test string (`"CQ CQ DE PI4ABC"`) into the gateway session as an inbound message using `api.dispatchInbound({ text, peer, channel })`
+- [x] **1.4.4** Confirm the test string arrives in the agent session by checking gateway logs
+- [x] **1.4.5** Add a configurable delay before dispatching the test string (e.g., 2 seconds after service start) to allow the gateway to fully initialize
 
 ### 1.5 Channel Configuration Schema
 
-- [ ] **1.5.1** Define the channel config structure in `openclaw.json` with the following fields:
+- [x] **1.5.1** Define the channel config structure in `openclaw.json` with the following fields:
   - `frequency` (number, Hz — e.g., `7030000` for 7.030 MHz)
   - `mode` (string — `"CW"`, `"USB"`, etc.)
   - `fldigi.host` (string — default `"127.0.0.1"`)
@@ -55,9 +55,9 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `tx.maxDurationSeconds` (number — safety limit)
   - `tx.wpm` (number — words per minute, default `20`)
   - `tx.callsign` (string — the station's own callsign, required for TX)
-- [ ] **1.5.2** Implement config validation with clear error messages for missing/invalid fields
-- [ ] **1.5.3** Implement config defaults so only required fields need to be specified
-- [ ] **1.5.4** Document each config field with inline comments or a config schema reference
+- [x] **1.5.2** Implement config validation with clear error messages for missing/invalid fields
+- [x] **1.5.3** Implement config defaults so only required fields need to be specified
+- [x] **1.5.4** Document each config field with inline comments or a config schema reference
 
 ### 1.6 Installation and Verification
 

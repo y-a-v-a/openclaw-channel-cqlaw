@@ -1,0 +1,88 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import { validateConfig, resolveConfig } from "../src/config.js";
+import type { ChannelConfig } from "../src/config.js";
+
+describe("resolveConfig", () => {
+  it("returns full defaults when given empty partial", () => {
+    const config = resolveConfig({});
+    assert.equal(config.frequency, 7030000);
+    assert.equal(config.mode, "CW");
+    assert.equal(config.fldigi.host, "127.0.0.1");
+    assert.equal(config.fldigi.port, 7362);
+    assert.equal(config.fldigi.pollingIntervalMs, 250);
+    assert.equal(config.sdr.enabled, false);
+    assert.equal(config.tx.enabled, false);
+    assert.equal(config.tx.wpm, 20);
+  });
+
+  it("overrides specific fields while keeping defaults for the rest", () => {
+    const config = resolveConfig({
+      frequency: 14030000,
+      fldigi: { port: 8000 },
+    });
+    assert.equal(config.frequency, 14030000);
+    assert.equal(config.fldigi.port, 8000);
+    assert.equal(config.fldigi.host, "127.0.0.1");
+    assert.equal(config.mode, "CW");
+  });
+});
+
+describe("validateConfig", () => {
+  function validConfig(): ChannelConfig {
+    return resolveConfig({});
+  }
+
+  it("returns no errors for a valid default config", () => {
+    const errors = validateConfig(validConfig());
+    assert.equal(errors.length, 0);
+  });
+
+  it("rejects zero frequency", () => {
+    const config = { ...validConfig(), frequency: 0 };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "frequency"));
+  });
+
+  it("rejects negative frequency", () => {
+    const config = { ...validConfig(), frequency: -100 };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "frequency"));
+  });
+
+  it("rejects empty mode", () => {
+    const config = { ...validConfig(), mode: "" };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "mode"));
+  });
+
+  it("rejects invalid port", () => {
+    const config = { ...validConfig(), fldigi: { ...validConfig().fldigi, port: 0 } };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "fldigi.port"));
+  });
+
+  it("rejects polling interval below 50ms", () => {
+    const config = { ...validConfig(), fldigi: { ...validConfig().fldigi, pollingIntervalMs: 10 } };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "fldigi.pollingIntervalMs"));
+  });
+
+  it("requires callsign when TX is enabled", () => {
+    const config = { ...validConfig(), tx: { ...validConfig().tx, enabled: true, callsign: "" } };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "tx.callsign"));
+  });
+
+  it("allows TX enabled with callsign set", () => {
+    const config = { ...validConfig(), tx: { ...validConfig().tx, enabled: true, callsign: "PA3XYZ" } };
+    const errors = validateConfig(config);
+    assert.ok(!errors.some(e => e.field === "tx.callsign"));
+  });
+
+  it("rejects WPM outside valid range", () => {
+    const config = { ...validConfig(), tx: { ...validConfig().tx, wpm: 3 } };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "tx.wpm"));
+  });
+});
