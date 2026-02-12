@@ -98,25 +98,25 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 2.3 Sentence Buffering Logic
 
-- [ ] **2.3.1** Create a `SentenceBuffer` class that accumulates decoded characters from the polling loop
-- [ ] **2.3.2** Implement word boundary detection: fldigi inserts spaces between decoded words based on dit/dah timing
-- [ ] **2.3.3** Implement silence-based flush: if no new characters arrive for a configurable threshold (default 3 seconds), flush the buffer as a complete message
-- [ ] **2.3.4** Implement prosign-based flush: detect `AR` (end of message) and `SK` (end of contact) prosigns and flush immediately when encountered
-- [ ] **2.3.5** Implement `K` (go ahead) detection as a flush trigger — this signals the other station is done transmitting and expects a response
-- [ ] **2.3.6** Implement `KN` (go ahead, named station only) detection as a flush trigger
-- [ ] **2.3.7** Implement `BK` (break) detection as a flush trigger for break-in conversations
-- [ ] **2.3.8** Handle partial words at flush boundaries: if the silence threshold fires mid-word, either wait slightly longer or include the partial
-- [ ] **2.3.9** Strip leading/trailing whitespace and normalize multiple spaces to single spaces in flushed messages
+- [x] **2.3.1** Create a `SentenceBuffer` class that accumulates decoded characters from the polling loop
+- [x] **2.3.2** Implement word boundary detection: fldigi inserts spaces between decoded words based on dit/dah timing
+- [x] **2.3.3** Implement silence-based flush: if no new characters arrive for a configurable threshold (default 3 seconds), flush the buffer as a complete message
+- [x] **2.3.4** Implement prosign-based flush: detect `AR` (end of message) and `SK` (end of contact) prosigns and flush immediately when encountered
+- [x] **2.3.5** Implement `K` (go ahead) detection as a flush trigger — this signals the other station is done transmitting and expects a response
+- [x] **2.3.6** Implement `KN` (go ahead, named station only) detection as a flush trigger
+- [x] **2.3.7** Implement `BK` (break) detection as a flush trigger for break-in conversations
+- [x] **2.3.8** Handle partial words at flush boundaries: if the silence threshold fires mid-word, either wait slightly longer or include the partial
+- [x] **2.3.9** Strip leading/trailing whitespace and normalize multiple spaces to single spaces in flushed messages
 - [ ] **2.3.10** Dispatch the flushed message to the gateway via `api.dispatchInbound({ text, peer, channel })`
 - [ ] **2.3.11** Include metadata with dispatched messages: timestamp, frequency, detected WPM, S/N ratio
 
 ### 2.4 Callsign Extraction
 
-- [ ] **2.4.1** Implement a regex-based callsign pattern matcher that recognizes standard amateur radio callsign formats (prefix + digit + suffix, e.g., `PA3XYZ`, `W1AW`, `VU2ABC`)
-- [ ] **2.4.2** Detect `CQ ... DE <callsign>` patterns in decoded text to identify who is calling
-- [ ] **2.4.3** Detect `<callsign> DE <callsign>` patterns to identify both sides of a QSO
+- [x] **2.4.1** Implement a regex-based callsign pattern matcher that recognizes standard amateur radio callsign formats (prefix + digit + suffix, e.g., `PA3XYZ`, `W1AW`, `VU2ABC`)
+- [x] **2.4.2** Detect `CQ ... DE <callsign>` patterns in decoded text to identify who is calling
+- [x] **2.4.3** Detect `<callsign> DE <callsign>` patterns to identify both sides of a QSO
 - [ ] **2.4.4** Tag the gateway session peer with the extracted callsign so the agent knows who it's talking to
-- [ ] **2.4.5** Handle compound callsigns (e.g., `PA3XYZ/P` for portable, `DL2ABC/MM` for maritime mobile)
+- [x] **2.4.5** Handle compound callsigns (e.g., `PA3XYZ/P` for portable, `DL2ABC/MM` for maritime mobile)
 - [ ] **2.4.6** Handle special event callsigns and contest callsigns that may deviate from standard formats
 
 ### 2.5 Error Handling and Resilience
