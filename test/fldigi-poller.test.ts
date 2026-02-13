@@ -110,11 +110,11 @@ describe("FldigiPoller", () => {
   it("dispatches messages when RX text arrives and ends with prosign", async () => {
     mock = createMockFldigi();
     const port = await mock.start();
-    const messages: Array<{ text: string; peer: string }> = [];
+    const messages: Array<{ text: string; peer: string; metadata: Record<string, unknown> }> = [];
 
     const config = resolveConfig({ fldigi: { port, pollingIntervalMs: 50 } });
     poller = new FldigiPoller(config, {
-      onMessage: (text, peer) => messages.push({ text, peer }),
+      onMessage: (text, peer, metadata) => messages.push({ text, peer, metadata }),
       onStatusChange: () => {},
     });
 
@@ -130,6 +130,8 @@ describe("FldigiPoller", () => {
     assert.equal(messages.length, 1);
     assert.equal(messages[0].text, "CQ CQ DE PA3XYZ K");
     assert.equal(messages[0].peer, "PA3XYZ");
+    assert.equal(messages[0].metadata.detectedWpm, 20);
+    assert.equal(messages[0].metadata.snr, 20);
   });
 
   it("extracts peer from directed exchange", async () => {

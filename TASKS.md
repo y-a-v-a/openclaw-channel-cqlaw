@@ -107,15 +107,15 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **2.3.7** Implement `BK` (break) detection as a flush trigger for break-in conversations
 - [x] **2.3.8** Handle partial words at flush boundaries: if the silence threshold fires mid-word, either wait slightly longer or include the partial
 - [x] **2.3.9** Strip leading/trailing whitespace and normalize multiple spaces to single spaces in flushed messages
-- [ ] **2.3.10** Dispatch the flushed message to the gateway via `api.dispatchInbound({ text, peer, channel })`
-- [ ] **2.3.11** Include metadata with dispatched messages: timestamp, frequency, detected WPM, S/N ratio
+- [x] **2.3.10** Dispatch the flushed message to the gateway via `api.dispatchInbound({ text, peer, channel })`
+- [x] **2.3.11** Include metadata with dispatched messages: timestamp, frequency, detected WPM, S/N ratio
 
 ### 2.4 Callsign Extraction
 
 - [x] **2.4.1** Implement a regex-based callsign pattern matcher that recognizes standard amateur radio callsign formats (prefix + digit + suffix, e.g., `PA3XYZ`, `W1AW`, `VU2ABC`)
 - [x] **2.4.2** Detect `CQ ... DE <callsign>` patterns in decoded text to identify who is calling
 - [x] **2.4.3** Detect `<callsign> DE <callsign>` patterns to identify both sides of a QSO
-- [ ] **2.4.4** Tag the gateway session peer with the extracted callsign so the agent knows who it's talking to
+- [x] **2.4.4** Tag the gateway session peer with the extracted callsign so the agent knows who it's talking to
 - [x] **2.4.5** Handle compound callsigns (e.g., `PA3XYZ/P` for portable, `DL2ABC/MM` for maritime mobile)
 - [ ] **2.4.6** Handle special event callsigns and contest callsigns that may deviate from standard formats
 
@@ -222,7 +222,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **4.2.2** Before transmitting, check that `tx.enabled` is `true` in channel config — refuse to transmit if disabled
 - [x] **4.2.3** Before transmitting, check that `tx.callsign` is configured — refuse to transmit without a callsign
 - [x] **4.2.4** Sanitize agent text for CW transmission: strip characters that can't be sent in Morse, uppercase everything
-- [ ] **4.2.5** Ensure proper CW formatting: add appropriate prosigns (DE, K, AR, SK) based on context
+- [x] **4.2.5** Ensure proper CW formatting: add appropriate prosigns (DE, K, AR, SK) based on context
 - [x] **4.2.6** Push the sanitized text into fldigi's TX buffer via `sendTxText()`
 
 ### 4.3 PTT (Push-to-Talk) Control

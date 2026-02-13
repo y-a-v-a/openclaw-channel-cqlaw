@@ -25,6 +25,7 @@ const UNKNOWN_PEER = "UNKNOWN";
 const BACKOFF_INITIAL_MS = 1000;
 const BACKOFF_MAX_MS = 30000;
 const PERF_LOG_INTERVAL_MS = 60000;
+const SIGNAL_SAMPLE_INTERVAL_MS = 1000;
 
 export class FldigiPoller {
   private readonly client: FldigiClient;
@@ -40,6 +41,9 @@ export class FldigiPoller {
   private backoffMs = BACKOFF_INITIAL_MS;
   private pollCount = 0;
   private lastPerfLog = 0;
+  private lastSignalSampleAt = 0;
+  private detectedWpm: number | undefined;
+  private signalNoiseRatio: number | undefined;
 
   constructor(config: ChannelConfig, callbacks: FldigiPollerCallbacks) {
     this.config = config;
@@ -64,6 +68,9 @@ export class FldigiPoller {
     this.backoffMs = BACKOFF_INITIAL_MS;
     this.pollCount = 0;
     this.lastPerfLog = Date.now();
+    this.lastSignalSampleAt = 0;
+    this.detectedWpm = undefined;
+    this.signalNoiseRatio = undefined;
 
     await this.tryConnect();
   }
@@ -143,6 +150,8 @@ export class FldigiPoller {
         }
       }
 
+      await this.sampleSignalMetricsIfDue();
+
       this.pollCount++;
       this.logPerfIfDue(pollStart);
       this.schedulePoll();
@@ -183,10 +192,31 @@ export class FldigiPoller {
       timestamp: new Date().toISOString(),
       frequency: this.config.frequency,
       channel: CHANNEL_ID,
+      detectedWpm: this.detectedWpm,
+      snr: this.signalNoiseRatio,
     };
 
     this.callbacks.onMessage(message, this.currentPeer, metadata);
     this.currentPeer = UNKNOWN_PEER;
+  }
+
+  private async sampleSignalMetricsIfDue(): Promise<void> {
+    const now = Date.now();
+    if (now - this.lastSignalSampleAt < SIGNAL_SAMPLE_INTERVAL_MS) {
+      return;
+    }
+
+    this.lastSignalSampleAt = now;
+    try {
+      const [wpm, snr] = await Promise.all([
+        this.client.getWpm(),
+        this.client.getSignalNoiseRatio(),
+      ]);
+      if (Number.isFinite(wpm)) this.detectedWpm = wpm;
+      if (Number.isFinite(snr)) this.signalNoiseRatio = snr;
+    } catch {
+      // Non-fatal: metadata sampling should never break message flow.
+    }
   }
 
   private setStatus(status: ChannelStatus): void {

@@ -1,41 +1,73 @@
 /**
  * Background service for the morse-radio channel.
- * Phase 1: dispatches a hardcoded test string to verify end-to-end message flow.
- * Future: hosts the fldigi polling loop and SDR process management.
+ * Hosts the fldigi polling loop and dispatches inbound decoded text to OpenClaw.
  */
 
 import type { OpenClawApi, ServiceDefinition } from "./openclaw-api.js";
+import { resolveConfig, validateConfig, type ChannelConfig, type PartialChannelConfig } from "./config.js";
+import { FldigiPoller, type FldigiPollerCallbacks } from "./fldigi-poller.js";
+
+interface PollerLike {
+  start(): Promise<void>;
+  stop(): Promise<void>;
+}
+
+export interface ServiceOptions {
+  config?: PartialChannelConfig;
+  createPoller?: (config: ChannelConfig, callbacks: FldigiPollerCallbacks) => PollerLike;
+}
 
 const CHANNEL_ID = "morse-radio";
-const TEST_PEER = "PI4ABC";
-const TEST_MESSAGE = "CQ CQ DE PI4ABC";
-const STARTUP_DELAY_MS = 2000;
 
-export function createService(api: OpenClawApi): ServiceDefinition {
-  let startupTimer: ReturnType<typeof setTimeout> | null = null;
+export function createService(api: OpenClawApi, options: ServiceOptions = {}): ServiceDefinition {
+  const config = resolveConfig(options.config ?? {});
+  const createPoller = options.createPoller ?? ((cfg, callbacks) => new FldigiPoller(cfg, callbacks));
+  let poller: PollerLike | null = null;
+  let started = false;
 
   return {
     id: "morse-radio-service",
 
     async start() {
-      console.log("[morse-radio-service] Starting...");
+      if (started) return;
+      started = true;
 
-      // Dispatch a test message after a short delay to allow gateway initialization
-      startupTimer = setTimeout(() => {
-        console.log("[morse-radio-service] Dispatching test inbound message");
-        api.dispatchInbound({
-          text: TEST_MESSAGE,
-          peer: TEST_PEER,
-          channel: CHANNEL_ID,
-        });
-      }, STARTUP_DELAY_MS);
+      const configErrors = validateConfig(config);
+      if (configErrors.length > 0) {
+        console.error("[morse-radio-service] Invalid config; service will remain inactive");
+        for (const err of configErrors) {
+          console.error(`[morse-radio-service] config.${err.field}: ${err.message}`);
+        }
+        return;
+      }
+
+      console.log(`[morse-radio-service] Starting with fldigi at ${config.fldigi.host}:${config.fldigi.port}`);
+
+      poller = createPoller(config, {
+        onMessage: (text, peer, metadata) => {
+          api.dispatchInbound({
+            text,
+            peer,
+            channel: CHANNEL_ID,
+            metadata,
+          });
+        },
+        onStatusChange: (status) => {
+          console.log(`[morse-radio-service] Status: ${status}`);
+        },
+      });
+
+      await poller.start();
     },
 
     async stop() {
+      if (!started) return;
+      started = false;
+
       console.log("[morse-radio-service] Stopping...");
-      if (startupTimer) {
-        clearTimeout(startupTimer);
-        startupTimer = null;
+      if (poller) {
+        await poller.stop();
+        poller = null;
       }
     },
   };
