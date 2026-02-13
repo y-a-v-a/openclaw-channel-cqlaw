@@ -117,7 +117,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **2.4.3** Detect `<callsign> DE <callsign>` patterns to identify both sides of a QSO
 - [x] **2.4.4** Tag the gateway session peer with the extracted callsign so the agent knows who it's talking to
 - [x] **2.4.5** Handle compound callsigns (e.g., `PA3XYZ/P` for portable, `DL2ABC/MM` for maritime mobile)
-- [ ] **2.4.6** Handle special event callsigns and contest callsigns that may deviate from standard formats
+- [x] **2.4.6** Handle special event callsigns and contest callsigns that may deviate from standard formats
 
 ### 2.5 Error Handling and Resilience
 
@@ -254,7 +254,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 - [x] **4.6.1** Implement a timer that tracks time since last callsign identification was transmitted
 - [x] **4.6.2** If 10 minutes have elapsed since last ID and the station is transmitting, automatically append the station callsign
-- [ ] **4.6.3** Always include the station callsign at the end of each complete communication (QSO end)
+- [x] **4.6.3** Always include the station callsign at the end of each complete communication (QSO end)
 - [x] **4.6.4** This MUST be a hard-coded timer-based behaviour, NOT left to the LLM's judgment — regulatory requirement
 - [x] **4.6.5** Log each identification event for compliance records
 

@@ -1,27 +1,33 @@
 /**
  * Amateur radio callsign extraction from decoded CW text.
  *
- * Callsign structure: 1-2 letter prefix, 1 digit, 1-3 letter suffix.
- * Examples: W1AW, PA3XYZ, VU2ABC, JA1ABC, 4X6TT, 9A1A.
- * Compound suffixes: PA3XYZ/P (portable), DL2ABC/MM (maritime mobile), W1AW/4.
+ * Supports common standard callsigns and practical contest/special-event variants:
+ * - Standard: W1AW, PA3XYZ, VU2ABC, JA1ABC, 4X6TT, 9A1A
+ * - Special event: GB13YOTA, II0IARU
+ * - Portable/mobile: PA3XYZ/P, DL2ABC/MM, W1AW/4
+ * - DX prefix form: EA8/ON4UN
  */
 
 /**
- * Matches standard amateur radio callsigns.
+ * Base callsign variants:
+ * - Standard: 1-3 alphanumeric prefix, 1 digit, 1-5 letter suffix
+ * - Special-event/contest variant: 1-2 letter prefix, 2 digits, 1-6 letter suffix
  *
- * Pattern breakdown:
- *   [A-Z0-9]{1,2}  — prefix (1-2 alphanumeric, e.g. PA, W, 4X, 9A)
- *   \d              — mandatory single digit
- *   [A-Z]{1,4}     — suffix (1-4 letters)
- *   (?:\/\w+)?      — optional compound modifier (/P, /MM, /4, etc.)
+ * Wrapped callsign forms:
+ * - Optional DX prefix before slash: EA8/ON4UN
+ * - Optional portable/mobile modifier after slash: PA3XYZ/P
  */
-const CALLSIGN_PATTERN = /\b([A-Z0-9]{1,2}\d[A-Z]{1,4}(?:\/\w+)?)\b/g;
+const STANDARD_CALL = "[A-Z0-9]{1,3}\\d[A-Z]{1,5}";
+const SPECIAL_EVENT_CALL = "[A-Z]{1,2}\\d{2}[A-Z]{1,6}";
+const CALL_CORE = `(?:${STANDARD_CALL}|${SPECIAL_EVENT_CALL})`;
+const CALL_TOKEN = `(?:[A-Z0-9]{1,4}/)?${CALL_CORE}(?:/[A-Z0-9]{1,4})?`;
+const CALLSIGN_PATTERN = new RegExp(`\\b(${CALL_TOKEN})\\b`, "g");
 
 /** "CQ CQ DE PA3XYZ" or "CQ DE PA3XYZ" — extract the calling station */
-const CQ_DE_PATTERN = /\bCQ(?:\s+CQ)*\s+DE\s+([A-Z0-9]{1,2}\d[A-Z]{1,4}(?:\/\w+)?)\b/g;
+const CQ_DE_PATTERN = new RegExp(`\\bCQ(?:\\s+CQ)*\\s+DE\\s+(${CALL_TOKEN})\\b`, "g");
 
 /** "<call> DE <call>" — extract both sides of a directed exchange */
-const CALL_DE_CALL_PATTERN = /\b([A-Z0-9]{1,2}\d[A-Z]{1,4}(?:\/\w+)?)\s+DE\s+([A-Z0-9]{1,2}\d[A-Z]{1,4}(?:\/\w+)?)\b/g;
+const CALL_DE_CALL_PATTERN = new RegExp(`\\b(${CALL_TOKEN})\\s+DE\\s+(${CALL_TOKEN})\\b`, "g");
 
 export interface CallsignMatch {
   callsign: string;
@@ -105,6 +111,6 @@ export function extractDirectedExchanges(text: string): DirectedExchange[] {
  */
 export function isCallsign(text: string): boolean {
   const upper = text.toUpperCase().trim();
-  const pattern = /^[A-Z0-9]{1,2}\d[A-Z]{1,4}(?:\/\w+)?$/;
+  const pattern = new RegExp(`^${CALL_TOKEN}$`);
   return pattern.test(upper);
 }

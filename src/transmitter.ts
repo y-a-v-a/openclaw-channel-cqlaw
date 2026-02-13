@@ -158,9 +158,16 @@ export class Transmitter {
 
     // --- Legal ID check — append callsign if overdue ---
     let finalText = formatted;
+    if ((intent ?? "default") === "signoff") {
+      finalText = this.ensureSignoffIdentification(finalText);
+    }
+
     const idNeeded = this.isLegalIdDue();
     if (idNeeded) {
-      finalText = `${finalText} DE ${this.config.tx.callsign}`;
+      const legalId = `DE ${this.config.tx.callsign}`;
+      if (!finalText.includes(legalId)) {
+        finalText = `${finalText} ${legalId}`;
+      }
       this.lastIdTime = Date.now();
       this.callbacks.onLegalId(this.config.tx.callsign);
       console.log(`[transmitter] Legal ID appended: DE ${this.config.tx.callsign}`);
@@ -300,6 +307,34 @@ export class Transmitter {
   private isLegalIdDue(): boolean {
     if (this.lastIdTime === 0) return true;
     return Date.now() - this.lastIdTime >= LEGAL_ID_INTERVAL_MS;
+  }
+
+  /**
+   * Regulatory guard for final QSO messages:
+   * signoff transmissions must include station identification at the end.
+   */
+  private ensureSignoffIdentification(text: string): string {
+    const ownCall = this.config.tx.callsign;
+    const legalId = `DE ${ownCall}`;
+    const trimmed = text.trim();
+
+    if (trimmed.endsWith(`${legalId} SK`)) {
+      return trimmed;
+    }
+
+    if (trimmed.endsWith(" SK")) {
+      const withoutSk = trimmed.slice(0, -3).trimEnd();
+      if (withoutSk.endsWith(legalId)) {
+        return trimmed;
+      }
+      return `${withoutSk} ${legalId} SK`;
+    }
+
+    if (trimmed.endsWith(legalId)) {
+      return `${trimmed} SK`;
+    }
+
+    return `${trimmed} ${legalId} SK`;
   }
 
   private startDurationTimer(): void {

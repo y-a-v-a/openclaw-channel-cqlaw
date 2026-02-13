@@ -17,10 +17,17 @@ describe("isCallsign", () => {
     assert.ok(isCallsign("9A1A"));
   });
 
+  it("accepts special-event and contest-style callsigns", () => {
+    assert.ok(isCallsign("GB13YOTA"));
+    assert.ok(isCallsign("II0IARU"));
+    assert.ok(isCallsign("TM24REF"));
+  });
+
   it("accepts compound callsigns", () => {
     assert.ok(isCallsign("PA3XYZ/P"));
     assert.ok(isCallsign("DL2ABC/MM"));
     assert.ok(isCallsign("W1AW/4"));
+    assert.ok(isCallsign("EA8/ON4UN"));
   });
 
   it("is case-insensitive", () => {
@@ -64,6 +71,14 @@ describe("extractCallsigns", () => {
     assert.equal(result[0].callsign, "PA3XYZ/P");
   });
 
+  it("finds special-event and dx-prefix callsigns", () => {
+    const result = extractCallsigns("CQ DE GB13YOTA K EA8/ON4UN DE DL2ABC");
+    assert.equal(result.length, 3);
+    assert.equal(result[0].callsign, "GB13YOTA");
+    assert.equal(result[1].callsign, "EA8/ON4UN");
+    assert.equal(result[2].callsign, "DL2ABC");
+  });
+
   it("is case-insensitive", () => {
     const result = extractCallsigns("cq de pa3xyz k");
     assert.equal(result.length, 1);
@@ -102,6 +117,12 @@ describe("extractCqCalls", () => {
     assert.equal(result[0].from, "JA1ABC");
   });
 
+  it("extracts special-event CQ calls", () => {
+    const result = extractCqCalls("CQ CQ DE GB13YOTA K");
+    assert.equal(result.length, 1);
+    assert.equal(result[0].from, "GB13YOTA");
+  });
+
   it("returns empty when no CQ pattern found", () => {
     const result = extractCqCalls("PA3XYZ DE DL2ABC K");
     assert.equal(result.length, 0);
@@ -135,5 +156,12 @@ describe("extractDirectedExchanges", () => {
     assert.equal(result.length, 2);
     assert.equal(result[0].from, "DL2ABC");
     assert.equal(result[1].from, "PA3XYZ");
+  });
+
+  it("handles directed exchanges with dx-prefix forms", () => {
+    const result = extractDirectedExchanges("EA8/ON4UN DE DL2ABC K");
+    assert.equal(result.length, 1);
+    assert.equal(result[0].to, "EA8/ON4UN");
+    assert.equal(result[0].from, "DL2ABC");
   });
 });
