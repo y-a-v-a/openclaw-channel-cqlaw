@@ -145,6 +145,9 @@ function enrichInbound(
   const callsign = fields.callsign?.value ?? (isCallsign(peer) ? peer.toUpperCase() : undefined);
   const band = frequencyToBand(config.frequency) ?? "unknown";
   const previousContacts = callsign ? memoryStore.getByCallsign(callsign) : [];
+  const previousQsoContext = previousContacts.length > 0
+    ? summarizePreviousQso(previousContacts[0])
+    : undefined;
   const isDupeCall = callsign ? dupeStore.isDupe(callsign, band) : false;
 
   if (callsign) {
@@ -153,6 +156,10 @@ function enrichInbound(
       timestamp: new Date().toISOString(),
       frequency: config.frequency,
       band,
+      rstRcvd: fields.rstRcvd?.value,
+      name: fields.name?.value,
+      qth: fields.qth?.value,
+      remarks: text,
       note: "inbound",
     });
   }
@@ -180,6 +187,19 @@ function enrichInbound(
       qsoFields: fields,
       dupe: isDupeCall,
       previousContacts,
+      previousQsoContext,
     },
+  };
+}
+
+function summarizePreviousQso(record: QsoMemoryRecord): Record<string, unknown> {
+  return {
+    lastContactTimestamp: record.timestamp,
+    lastBand: record.band,
+    lastFrequency: record.frequency,
+    lastRstRcvd: record.rstRcvd,
+    lastName: record.name,
+    lastQth: record.qth,
+    lastRemarks: record.remarks,
   };
 }

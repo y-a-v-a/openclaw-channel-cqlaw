@@ -10,6 +10,10 @@ export interface QsoMemoryRecord {
   timestamp: string;
   frequency: number;
   band: string;
+  rstRcvd?: string;
+  name?: string;
+  qth?: string;
+  remarks?: string;
   note?: string;
 }
 
@@ -47,6 +51,10 @@ export class QsoMemoryStore {
               timestamp: item.timestamp,
               frequency: Number(item.frequency) || 0,
               band: typeof item.band === "string" ? item.band : "unknown",
+              rstRcvd: typeof item.rstRcvd === "string" ? item.rstRcvd : undefined,
+              name: typeof item.name === "string" ? item.name : undefined,
+              qth: typeof item.qth === "string" ? item.qth : undefined,
+              remarks: typeof item.remarks === "string" ? item.remarks : undefined,
               note: typeof item.note === "string" ? item.note : undefined,
             });
           }

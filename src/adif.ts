@@ -229,6 +229,81 @@ export class AdifLogger {
   }
 }
 
+export type AdifRotationPolicy = "none" | "daily" | "monthly" | "size";
+
+export interface RotatingAdifLoggerOptions {
+  basePath: string;
+  policy?: AdifRotationPolicy;
+  maxBytes?: number;
+}
+
+/**
+ * ADIF logger with simple archive rotation.
+ * - daily: log-YYYYMMDD.adi
+ * - monthly: log-YYYYMM.adi
+ * - size: rotate to log-001.adi, log-002.adi, ... when file exceeds maxBytes
+ */
+export class RotatingAdifLogger {
+  private readonly basePath: string;
+  private readonly policy: AdifRotationPolicy;
+  private readonly maxBytes: number;
+
+  constructor(options: RotatingAdifLoggerOptions) {
+    this.basePath = options.basePath;
+    this.policy = options.policy ?? "none";
+    this.maxBytes = options.maxBytes ?? 2_000_000;
+  }
+
+  initialize(now = new Date()): void {
+    const logger = new AdifLogger(this.resolvePath(now));
+    logger.initialize();
+  }
+
+  log(record: AdifRecord, now = new Date()): void {
+    const logger = new AdifLogger(this.resolvePath(now));
+    logger.initialize();
+    logger.loadExisting();
+    logger.log(record);
+  }
+
+  resolvePath(now = new Date()): string {
+    if (this.policy === "none") {
+      return this.basePath;
+    }
+
+    const parsed = path.parse(this.basePath);
+    if (this.policy === "daily") {
+      const stamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}`;
+      return path.join(parsed.dir, `${parsed.name}-${stamp}${parsed.ext || ".adi"}`);
+    }
+
+    if (this.policy === "monthly") {
+      const stamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+      return path.join(parsed.dir, `${parsed.name}-${stamp}${parsed.ext || ".adi"}`);
+    }
+
+    return this.resolveSizePath(parsed.dir, parsed.name, parsed.ext || ".adi");
+  }
+
+  private resolveSizePath(dir: string, name: string, ext: string): string {
+    const first = path.join(dir, `${name}-001${ext}`);
+    if (!fs.existsSync(first) || fs.statSync(first).size < this.maxBytes) {
+      return first;
+    }
+
+    let index = 2;
+    while (index < 10_000) {
+      const candidate = path.join(dir, `${name}-${String(index).padStart(3, "0")}${ext}`);
+      if (!fs.existsSync(candidate) || fs.statSync(candidate).size < this.maxBytes) {
+        return candidate;
+      }
+      index++;
+    }
+
+    return path.join(dir, `${name}-9999${ext}`);
+  }
+}
+
 /** Parse a single ADIF record chunk into an AdifRecord (best-effort). */
 function parseRecordChunk(chunk: string): AdifRecord | null {
   const fields = new Map<string, string>();

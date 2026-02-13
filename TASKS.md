@@ -13,7 +13,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **1.1.1** Initialize the project with `package.json` including `openclaw.extensions` entry point field
 - [x] **1.1.2** Set up TypeScript configuration (`tsconfig.json`) targeting the OpenClaw plugin runtime (jiti, no compile step required)
 - [x] **1.1.3** Create `openclaw.plugin.json` manifest declaring the plugin name (`cqlaw`), version, and capabilities
-- [ ] **1.1.4** Set up linting (ESLint) and formatting (Prettier) configuration
+- [x] **1.1.4** Set up linting (ESLint) and formatting (Prettier) configuration
 - [x] **1.1.5** Set up the `test/` directory structure with a test runner (vitest or jest)
 - [x] **1.1.6** Create a `.gitignore` covering `node_modules/`, `dist/`, and any local config files
 - [x] **1.1.7** Add a `README.md` with basic project description, prerequisites, and install instructions
@@ -366,7 +366,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **5b.9** Implement dupe detection: check if the same callsign has already been worked on the same band (and optionally same mode)
 - [x] **5b.10** Flag dupes visually in agent responses and in the log
 - [x] **5b.11** Store the ADIF log file at a configurable path (default: `~/.openclaw/cqlaw/log.adi`)
-- [ ] **5b.12** Implement log rotation or archival (optional): create a new log file per day/month or when size exceeds a threshold
+- [x] **5b.12** Implement log rotation or archival (optional): create a new log file per day/month or when size exceeds a threshold
 - [ ] **5b.13** Implement export to external logging software APIs (optional/future):
   - Cloudlog API integration
   - Log4OM import
@@ -434,21 +434,21 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `scoringRules` (object — how points and multipliers are calculated)
   - `bandPlan` (object — which bands are used)
   - `duration` (object — start/end times, typically UTC)
-- [ ] **5e.2** Implement contest profiles for popular events:
+- [x] **5e.2** Implement contest profiles for popular events:
   - **CQ WW DX Contest**: Exchange = RST + CQ zone (1-40). Multipliers = countries + zones per band.
   - **CQ WPX Contest**: Exchange = RST + serial number. Multipliers = unique prefixes per band.
   - **ARRL Field Day**: Exchange = category + ARRL section (e.g., `"2A ENY"`). Scoring by mode and power.
   - **IARU HF Championship**: Exchange = RST + ITU zone (or HQ station identifier). Multipliers = zones + HQ stations.
   - **ARRL Sweepstakes**: Exchange = serial + precedence + callsign + check + section.
-- [ ] **5e.3** Implement a contest session manager:
+- [x] **5e.3** Implement a contest session manager:
   - Activate a specific contest profile
   - Track the contest clock (elapsed time, time remaining)
   - Maintain contest-specific state (current serial number for TX, etc.)
-- [ ] **5e.4** Implement real-time scoring:
+- [x] **5e.4** Implement real-time scoring:
   - Calculate QSO points based on contest rules (e.g., CQ WW: same continent = 1 pt, different continent = 3 pts)
   - Track multipliers: new countries, new zones, new prefixes — per band
   - Calculate running total score: points × multipliers
-- [ ] **5e.5** Implement the dupe sheet:
+- [x] **5e.5** Implement the dupe sheet:
   - In-memory lookup of all worked callsigns per band
   - Instant detection when a callsign has already been worked on the current band
   - Flag dupes to the agent so it can skip or QSY
@@ -488,7 +488,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 - [x] **5g.1** Implement a persistent QSO database (beyond the ADIF log file) that stores structured contact records queryable by callsign
 - [x] **5g.2** When a callsign is detected, automatically query the database for previous contacts
-- [ ] **5g.3** Provide the agent with previous QSO context: last contact date, band, RST exchanged, name, QTH, any remarks
+- [x] **5g.3** Provide the agent with previous QSO context: last contact date, band, RST exchanged, name, QTH, any remarks
 - [ ] **5g.4** Enable the agent to reference previous contacts naturally: "Hello Hans, we last worked on 40 meters in March"
 - [ ] **5g.5** Combine QSO memory with QRZ.com data for rich context about returning stations
 - [ ] **5g.6** Ensure the memory recall feels natural and not uncanny — the agent should reference previous contacts the way a human operator would (briefly, warmly), not recite a dossier

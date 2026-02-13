@@ -99,7 +99,17 @@ describe("createService", () => {
   it("flags dupes and low-confidence visually and includes previous contacts", async () => {
     const api = createMockApi();
     const callbackHolder: { callbacks?: FldigiPollerCallbacks } = {};
-    const memoryRecords = [{ callsign: "PI4ABC", timestamp: "2026-02-12T10:00:00.000Z", frequency: 7030000, band: "40m", note: "old" }];
+    const memoryRecords = [{
+      callsign: "PI4ABC",
+      timestamp: "2026-02-12T10:00:00.000Z",
+      frequency: 7030000,
+      band: "40m",
+      rstRcvd: "579",
+      name: "HANS",
+      qth: "MUNICH",
+      remarks: "LAST QSO",
+      note: "old",
+    }];
 
     const service = createService(api, {
       createPoller: (_config: ChannelConfig, cb: FldigiPollerCallbacks) => {
@@ -134,6 +144,7 @@ describe("createService", () => {
     assert.equal(api.dispatched[0].metadata?.dupe, true);
     assert.equal((api.dispatched[0].metadata?.previousContacts as unknown[]).length, 1);
     assert.deepEqual(api.dispatched[0].metadata?.lowConfidenceFields, []);
+    assert.equal((api.dispatched[0].metadata?.previousQsoContext as Record<string, unknown>).lastName, "HANS");
   });
 
   it("applies fuzzy callsign matching from known memory calls", async () => {
