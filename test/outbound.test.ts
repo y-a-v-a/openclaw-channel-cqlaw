@@ -12,4 +12,42 @@ describe("createSendTextHandler", () => {
     });
     assert.equal(result.success, true);
   });
+
+  it("falls back to default intent when metadata txIntent is invalid", async () => {
+    const calls: Array<{ text: string; intent: string; peerCall?: string }> = [];
+    const handler = createSendTextHandler({
+      send: async (text: string, _wpm?: number, intent?: string, peerCall?: string) => {
+        calls.push({ text, intent: intent ?? "default", peerCall });
+        return { success: true, transmitted: text };
+      },
+    } as any);
+
+    const result = await handler({
+      text: "TEST",
+      peer: "PA3XYZ",
+      channel: "morse-radio",
+      metadata: { txIntent: "bogus" },
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(calls[0].intent, "default");
+  });
+
+  it("does not pass malformed peer as callsign", async () => {
+    const calls: Array<{ peerCall?: string }> = [];
+    const handler = createSendTextHandler({
+      send: async (_text: string, _wpm?: number, _intent?: string, peerCall?: string) => {
+        calls.push({ peerCall });
+        return { success: true };
+      },
+    } as any);
+
+    await handler({
+      text: "TEST",
+      peer: "dl2abc && rm -rf /",
+      channel: "morse-radio",
+    });
+
+    assert.equal(calls[0].peerCall, undefined);
+  });
 });

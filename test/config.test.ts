@@ -80,6 +80,17 @@ describe("validateConfig", () => {
     assert.ok(!errors.some(e => e.field === "tx.callsign"));
   });
 
+  it("rejects invalid callsign format", () => {
+    const config = { ...validConfig(), tx: { ...validConfig().tx, enabled: true, callsign: "NOT_A_CALL" } };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "tx.callsign"));
+  });
+
+  it("normalizes callsign to uppercase in resolved config", () => {
+    const config = resolveConfig({ tx: { callsign: " pa3xyz " } });
+    assert.equal(config.tx.callsign, "PA3XYZ");
+  });
+
   it("rejects WPM outside valid range", () => {
     const config = { ...validConfig(), tx: { ...validConfig().tx, wpm: 3 } };
     const errors = validateConfig(config);

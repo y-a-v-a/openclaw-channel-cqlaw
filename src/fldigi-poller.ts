@@ -186,6 +186,7 @@ export class FldigiPoller {
     };
 
     this.callbacks.onMessage(message, this.currentPeer, metadata);
+    this.currentPeer = UNKNOWN_PEER;
   }
 
   private setStatus(status: ChannelStatus): void {

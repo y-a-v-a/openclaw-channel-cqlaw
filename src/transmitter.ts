@@ -62,7 +62,10 @@ export class Transmitter {
   private listenStartTime = 0;
   private qrlCheckedForFrequency: number | null = null;
   private inhibited = false;
+  private txInProgress = false;
   private txDurationTimer: ReturnType<typeof setTimeout> | null = null;
+  private txCompletionTimer: ReturnType<typeof setInterval> | null = null;
+  private operationQueue: Promise<void> = Promise.resolve();
 
   constructor(client: FldigiClient, config: ChannelConfig, callbacks: TransmitterCallbacks) {
     this.client = client;
@@ -82,7 +85,9 @@ export class Transmitter {
   /** Emergency stop — abort TX and set inhibit flag */
   async emergencyStop(): Promise<void> {
     this.inhibited = true;
+    this.txInProgress = false;
     this.clearDurationTimer();
+    this.clearCompletionTimer();
     try {
       await this.client.abortTx();
       await this.client.stopTx();
@@ -101,6 +106,7 @@ export class Transmitter {
   /** Cancel pending timers. Call on shutdown. */
   destroy(): void {
     this.clearDurationTimer();
+    this.clearCompletionTimer();
   }
 
   /**
@@ -108,6 +114,18 @@ export class Transmitter {
    * Applies all safety checks, sanitization, formatting, speed matching, and legal ID.
    */
   async send(text: string, detectedRxWpm?: number, intent?: TxIntent, peerCall?: string): Promise<TransmitResult> {
+    return this.enqueue(() => this.sendUnsafe(text, detectedRxWpm, intent, peerCall));
+  }
+
+  /**
+   * Send QRL? ("is this frequency in use?") and wait for a response.
+   * Returns true if frequency appears clear, false if occupied.
+   */
+  async checkQrl(): Promise<boolean> {
+    return this.enqueue(() => this.checkQrlUnsafe());
+  }
+
+  private async sendUnsafe(text: string, detectedRxWpm?: number, intent?: TxIntent, peerCall?: string): Promise<TransmitResult> {
     // --- Pre-flight safety checks ---
 
     const preflight = this.preflightChecks();
@@ -157,7 +175,9 @@ export class Transmitter {
     }
 
     // --- Max duration safety timer ---
+    this.txInProgress = true;
     this.startDurationTimer();
+    this.startCompletionTimer();
 
     this.lastTxTime = Date.now();
 
@@ -180,14 +200,11 @@ export class Transmitter {
     return { success: true, transmitted: finalText };
   }
 
-  /**
-   * Send QRL? ("is this frequency in use?") and wait for a response.
-   * Returns true if frequency appears clear, false if occupied.
-   */
-  async checkQrl(): Promise<boolean> {
+  private async checkQrlUnsafe(): Promise<boolean> {
     const preflight = this.preflightChecks();
     if (preflight) return false;
 
+    this.txInProgress = true;
     try {
       // Record buffer position before QRL?
       const rxBefore = await this.client.getRxLength();
@@ -216,6 +233,15 @@ export class Transmitter {
     } catch (err) {
       console.warn(`[transmitter] QRL? check failed: ${err instanceof Error ? err.message : err}`);
       return false;
+    } finally {
+      try {
+        await this.client.stopTx();
+      } catch {
+        // Best effort
+      }
+      this.txInProgress = false;
+      this.clearDurationTimer();
+      this.clearCompletionTimer();
     }
   }
 
@@ -279,12 +305,18 @@ export class Transmitter {
   private startDurationTimer(): void {
     this.clearDurationTimer();
     this.txDurationTimer = setTimeout(async () => {
+      if (!this.txInProgress) {
+        return;
+      }
       console.warn(`[transmitter] Max TX duration (${this.config.tx.maxDurationSeconds}s) exceeded — aborting`);
       try {
         await this.client.abortTx();
         await this.client.stopTx();
       } catch {
         // Best effort
+      } finally {
+        this.txInProgress = false;
+        this.clearCompletionTimer();
       }
     }, this.config.tx.maxDurationSeconds * 1000);
   }
@@ -294,6 +326,47 @@ export class Transmitter {
       clearTimeout(this.txDurationTimer);
       this.txDurationTimer = null;
     }
+  }
+
+  private startCompletionTimer(): void {
+    this.clearCompletionTimer();
+    let emptySamples = 0;
+
+    this.txCompletionTimer = setInterval(async () => {
+      if (!this.txInProgress) {
+        this.clearCompletionTimer();
+        return;
+      }
+
+      try {
+        const txLen = await this.client.getTxLength();
+        if (txLen === 0) {
+          emptySamples++;
+          if (emptySamples >= 2) {
+            this.txInProgress = false;
+            this.clearDurationTimer();
+            this.clearCompletionTimer();
+          }
+        } else {
+          emptySamples = 0;
+        }
+      } catch {
+        // Keep the hard max-duration timer active even if monitoring fails.
+      }
+    }, 500);
+  }
+
+  private clearCompletionTimer(): void {
+    if (this.txCompletionTimer) {
+      clearInterval(this.txCompletionTimer);
+      this.txCompletionTimer = null;
+    }
+  }
+
+  private async enqueue<T>(operation: () => Promise<T>): Promise<T> {
+    const run = this.operationQueue.then(operation, operation);
+    this.operationQueue = run.then(() => undefined, () => undefined);
+    return run;
   }
 }
 

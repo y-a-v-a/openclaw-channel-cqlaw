@@ -6,6 +6,22 @@
 import type { OutboundMessage, SendResult } from "./openclaw-api.js";
 import type { Transmitter } from "./transmitter.js";
 import type { TxIntent } from "./cw-format.js";
+import { isCallsign } from "./callsign.js";
+
+const VALID_INTENTS: ReadonlySet<TxIntent> = new Set(["cq", "reply", "signoff", "default"]);
+
+function resolveIntent(metadata: Record<string, unknown> | undefined): TxIntent {
+  const candidate = metadata?.txIntent;
+  if (typeof candidate === "string" && VALID_INTENTS.has(candidate as TxIntent)) {
+    return candidate as TxIntent;
+  }
+  return "default";
+}
+
+function resolvePeerCall(peer: string): string | undefined {
+  const upper = peer.toUpperCase().trim();
+  return isCallsign(upper) ? upper : undefined;
+}
 
 /**
  * Create an outbound sendText handler bound to a Transmitter instance.
@@ -24,8 +40,8 @@ export function createSendTextHandler(
 
   return async (message: OutboundMessage): Promise<SendResult> => {
     const rxWpm = getDetectedWpm?.();
-    const intent = (message.metadata?.txIntent as TxIntent) ?? "default";
-    const peerCall = message.peer;
+    const intent = resolveIntent(message.metadata);
+    const peerCall = resolvePeerCall(message.peer);
     const result = await transmitter.send(message.text, rxWpm, intent, peerCall);
     return { success: result.success, error: result.error };
   };

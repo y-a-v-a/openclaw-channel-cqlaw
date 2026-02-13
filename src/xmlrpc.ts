@@ -8,6 +8,8 @@
 
 import http from "node:http";
 
+const MAX_RESPONSE_BYTES = 1_000_000;
+
 /** Encode a single XML-RPC parameter value */
 function encodeValue(value: string | number | boolean | Buffer): string {
   if (typeof value === "string") {
@@ -80,6 +82,15 @@ function parseResponse(xml: string): string {
   return value;
 }
 
+function unescapeXml(s: string): string {
+  return s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
 export class XmlRpcError extends Error {
   constructor(message: string) {
     super(message);
@@ -110,6 +121,18 @@ export class XmlRpcClient {
     const body = buildRequest(method, params);
 
     return new Promise((resolve, reject) => {
+      let settled = false;
+      const fail = (err: Error): void => {
+        if (settled) return;
+        settled = true;
+        reject(err);
+      };
+      const succeed = (value: string): void => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+
       const req = http.request(
         {
           hostname: this.host,
@@ -124,13 +147,29 @@ export class XmlRpcClient {
         },
         (res) => {
           const chunks: Buffer[] = [];
+          let totalBytes = 0;
+
+          if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+            res.resume();
+            fail(new XmlRpcError(`XML-RPC HTTP error ${res.statusCode ?? "unknown"} calling ${method}`));
+            return;
+          }
+
           res.on("data", (chunk: Buffer) => chunks.push(chunk));
+          res.on("data", (chunk: Buffer) => {
+            totalBytes += chunk.length;
+            if (totalBytes > MAX_RESPONSE_BYTES) {
+              req.destroy();
+              fail(new XmlRpcError(`XML-RPC response too large (${totalBytes} bytes) calling ${method}`));
+            }
+          });
           res.on("end", () => {
+            if (settled) return;
             try {
               const xml = Buffer.concat(chunks).toString("utf-8");
-              resolve(parseResponse(xml));
+              succeed(unescapeXml(parseResponse(xml)));
             } catch (err) {
-              reject(err);
+              fail(err instanceof Error ? err : new XmlRpcError(String(err)));
             }
           });
         }
@@ -138,11 +177,11 @@ export class XmlRpcClient {
 
       req.on("timeout", () => {
         req.destroy();
-        reject(new XmlRpcError(`XML-RPC timeout after ${this.timeoutMs}ms calling ${method}`));
+        fail(new XmlRpcError(`XML-RPC timeout after ${this.timeoutMs}ms calling ${method}`));
       });
 
       req.on("error", (err) => {
-        reject(new XmlRpcError(`XML-RPC connection error: ${err.message}`));
+        fail(new XmlRpcError(`XML-RPC connection error: ${err.message}`));
       });
 
       req.write(body);

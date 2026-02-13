@@ -58,6 +58,9 @@ function createMockFldigi() {
       } else if (body.includes("text.get_rx_length")) {
         methodsCalled.push("text.get_rx_length");
         response = wrapInt(rxLength);
+      } else if (body.includes("text.get_tx_length")) {
+        methodsCalled.push("text.get_tx_length");
+        response = wrapInt(0);
       } else {
         response = wrapString("");
       }
@@ -323,5 +326,38 @@ describe("Transmitter", () => {
 
     const result = await tx.send("TEST K");
     assert.equal(result.success, true);
+  });
+
+  it("always returns to RX after QRL check", async () => {
+    mock = createMockFldigi();
+    const port = await mock.start();
+    const config = resolveConfig({ fldigi: { port }, tx: { enabled: true, callsign: "PA3XYZ" } });
+    const client = new FldigiClient({ host: "127.0.0.1", port });
+    const { callbacks } = createCallbacks();
+
+    tx = new Transmitter(client, config, callbacks);
+    const clear = await tx.checkQrl();
+
+    assert.equal(typeof clear, "boolean");
+    assert.ok(mock.getMethodsCalled().includes("main.rx"));
+  });
+
+  it("serializes concurrent sends so cooldown is enforced", async () => {
+    mock = createMockFldigi();
+    const port = await mock.start();
+    const config = resolveConfig({ fldigi: { port }, tx: { enabled: true, callsign: "PA3XYZ", wpm: 20 } });
+    const client = new FldigiClient({ host: "127.0.0.1", port });
+    const { callbacks } = createCallbacks();
+
+    tx = new Transmitter(client, config, callbacks);
+    (tx as any).listenStartTime = Date.now() - 15000;
+
+    const [a, b] = await Promise.all([tx.send("FIRST K"), tx.send("SECOND K")]);
+    const successes = [a.success, b.success].filter(Boolean).length;
+    const failures = [a, b].filter((r) => !r.success);
+
+    assert.equal(successes, 1);
+    assert.equal(failures.length, 1);
+    assert.ok(failures[0].error?.includes("cooldown"));
   });
 });
