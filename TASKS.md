@@ -427,7 +427,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 5e. Contest Operation
 
-- [ ] **5e.1** Define a contest profile schema with the following fields:
+- [x] **5e.1** Define a contest profile schema with the following fields:
   - `contestId` (string — e.g., `"CQWW"`, `"ARRL-FD"`, `"CQ-WPX"`)
   - `name` (string — human-readable name)
   - `exchangeFormat` (object — what fields are exchanged)
@@ -463,14 +463,14 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - Cabrillo is the standard contest log submission format
   - Generate a valid Cabrillo file from the contest session data
   - Include header fields: contest ID, callsign, category, club, operators, etc.
-- [ ] **5e.9** Implement contest exchange parsing: given a decoded contest exchange, extract the expected fields based on the active contest profile
-- [ ] **5e.10** Implement contest exchange generation: compose the agent's contest exchange based on the active profile and current serial number
+- [x] **5e.9** Implement contest exchange parsing: given a decoded contest exchange, extract the expected fields based on the active contest profile
+- [x] **5e.10** Implement contest exchange generation: compose the agent's contest exchange based on the active profile and current serial number
 
 ### 5f. Error Correction and Context
 
-- [ ] **5f.1** Implement fuzzy callsign matching: when fldigi decodes a callsign with uncertain characters (e.g., `PA3X?Z`), query the QRZ database for likely matches
+- [x] **5f.1** Implement fuzzy callsign matching: when fldigi decodes a callsign with uncertain characters (e.g., `PA3X?Z`), query the QRZ database for likely matches
 - [x] **5f.2** Implement Levenshtein distance or similar edit-distance matching for callsign candidates
-- [ ] **5f.3** Implement contextual reconstruction for common fields:
+- [x] **5f.3** Implement contextual reconstruction for common fields:
   - RST: if decoded as `5?9`, infer `599` (the most common report)
   - Zone numbers: cross-reference with callsign prefix to validate
   - Serial numbers: should be monotonically increasing in contests

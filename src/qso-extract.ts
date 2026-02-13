@@ -4,6 +4,7 @@
 
 import { extractCallsigns, isCallsign } from "./callsign.js";
 import { scoreConfidence, type Confidence } from "./fuzzy-match.js";
+import { reconstructRst, reconstructSerial, reconstructZone } from "./context-reconstruct.js";
 
 export interface ExtractedField {
   value: string;
@@ -13,15 +14,21 @@ export interface ExtractedField {
 export interface ExtractedQsoFields {
   callsign?: ExtractedField;
   rstRcvd?: ExtractedField;
+  zone?: ExtractedField;
+  serial?: ExtractedField;
   name?: ExtractedField;
   qth?: ExtractedField;
 }
 
 export interface QsoExtractOptions {
   peerHint?: string;
+  previousSerial?: number;
 }
 
 const RST_PATTERN = /\b([1-5][1-9][1-9])\b/g;
+const RST_NOISY_PATTERN = /\b([1-5?][1-9?][1-9?])\b/g;
+const ZONE_PATTERN = /\b(?:ZONE|ZN|Z)\s+([0-9?]{1,2})\b/;
+const SERIAL_PATTERN = /\b(?:NR|SER|SN)\s+([0-9?]{1,4})\b/;
 const NAME_PATTERN = /\b(?:NAME|NM)\s+([A-Z]{2,12})\b/;
 const QTH_PATTERN = /\bQTH\s+([A-Z0-9\/-]{2,20})\b/;
 
@@ -36,7 +43,17 @@ export function extractQsoFields(text: string, options: QsoExtractOptions = {}):
 
   const rst = extractRst(upper);
   if (rst) {
-    out.rstRcvd = { value: rst, confidence: scoreConfidence(rst) };
+    out.rstRcvd = rst;
+  }
+
+  const zone = extractZone(upper, call);
+  if (zone) {
+    out.zone = zone;
+  }
+
+  const serial = extractSerial(upper, options.previousSerial);
+  if (serial) {
+    out.serial = serial;
   }
 
   const nameMatch = upper.match(NAME_PATTERN);
@@ -73,8 +90,30 @@ function extractCallsign(text: string, peerHint?: string): string | undefined {
   return calls[calls.length - 1].callsign;
 }
 
-function extractRst(text: string): string | undefined {
-  const matches = Array.from(text.matchAll(RST_PATTERN));
-  if (matches.length === 0) return undefined;
-  return matches[0][1];
+function extractZone(text: string, callsign?: string): ExtractedField | undefined {
+  const zoneMatch = text.match(ZONE_PATTERN);
+  const reconstructed = reconstructZone(zoneMatch?.[1], callsign);
+  if (!reconstructed) return undefined;
+  return reconstructed;
+}
+
+function extractSerial(text: string, previousSerial?: number): ExtractedField | undefined {
+  const serialMatch = text.match(SERIAL_PATTERN);
+  const reconstructed = reconstructSerial(serialMatch?.[1], previousSerial);
+  if (!reconstructed) return undefined;
+  return reconstructed;
+}
+
+function extractRst(text: string): ExtractedField | undefined {
+  const clean = Array.from(text.matchAll(RST_PATTERN));
+  if (clean.length > 0) {
+    const value = clean[0][1];
+    return { value, confidence: scoreConfidence(value) };
+  }
+
+  const noisy = Array.from(text.matchAll(RST_NOISY_PATTERN));
+  if (noisy.length === 0) return undefined;
+  const reconstructed = reconstructRst(noisy[0][1]);
+  if (!reconstructed) return undefined;
+  return reconstructed;
 }

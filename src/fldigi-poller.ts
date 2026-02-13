@@ -147,9 +147,10 @@ export class FldigiPoller {
 
         if (newText) {
           const filtered = filterDecodeNoise(newText);
-          if (filtered) {
-            this.updatePeer(filtered);
-            this.sentenceBuffer.push(filtered);
+          const chunk = preserveChunkEdges(filtered, newText);
+          if (chunk.trim()) {
+            this.updatePeer(chunk);
+            this.sentenceBuffer.push(chunk);
           }
         }
       }
@@ -238,4 +239,14 @@ export class FldigiPoller {
       this.lastPerfLog = now;
     }
   }
+}
+
+function preserveChunkEdges(filtered: string, rawChunk: string): string {
+  if (!filtered) return "";
+  const hasLeadingSpace = /^\s/.test(rawChunk);
+  const hasTrailingSpace = /\s$/.test(rawChunk);
+  let chunk = filtered;
+  if (hasLeadingSpace) chunk = ` ${chunk}`;
+  if (hasTrailingSpace) chunk = `${chunk} `;
+  return chunk;
 }

@@ -72,6 +72,10 @@ export class QsoMemoryStore {
       .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   }
 
+  getKnownCallsigns(): string[] {
+    return Array.from(new Set(this.records.map((r) => r.callsign)));
+  }
+
   getAll(): ReadonlyArray<QsoMemoryRecord> {
     return this.records;
   }

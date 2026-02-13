@@ -31,6 +31,7 @@ describe("createService", () => {
       initialize: () => {},
       addRecord: () => {},
       getByCallsign: () => [],
+      getKnownCallsigns: () => [],
     };
 
     const service = createService(api, {
@@ -85,6 +86,7 @@ describe("createService", () => {
         initialize: () => {},
         addRecord: () => {},
         getByCallsign: () => [],
+        getKnownCallsigns: () => [],
       }),
     });
 
@@ -113,6 +115,7 @@ describe("createService", () => {
         initialize: () => {},
         addRecord: () => {},
         getByCallsign: () => memoryRecords,
+        getKnownCallsigns: () => memoryRecords.map((r) => r.callsign),
       }),
       extractFields: (): ExtractedQsoFields => ({
         callsign: { value: "PI4ABC", confidence: "low" },
@@ -130,6 +133,40 @@ describe("createService", () => {
     assert.equal(api.dispatched[0].peer, "PI4ABC");
     assert.equal(api.dispatched[0].metadata?.dupe, true);
     assert.equal((api.dispatched[0].metadata?.previousContacts as unknown[]).length, 1);
-    assert.deepEqual(api.dispatched[0].metadata?.lowConfidenceFields, ["callsign"]);
+    assert.deepEqual(api.dispatched[0].metadata?.lowConfidenceFields, []);
+  });
+
+  it("applies fuzzy callsign matching from known memory calls", async () => {
+    const api = createMockApi();
+    const callbackHolder: { callbacks?: FldigiPollerCallbacks } = {};
+    const known = ["PI4ABC", "DL2ABC"];
+
+    const service = createService(api, {
+      createPoller: (_config: ChannelConfig, cb: FldigiPollerCallbacks) => {
+        callbackHolder.callbacks = cb;
+        return { async start() {}, async stop() {} };
+      },
+      createDupeStore: () => ({
+        initialize: () => {},
+        loadExisting: () => {},
+        isDupe: () => false,
+      }),
+      createMemoryStore: () => ({
+        initialize: () => {},
+        addRecord: () => {},
+        getByCallsign: () => [],
+        getKnownCallsigns: () => known,
+      }),
+      extractFields: (): ExtractedQsoFields => ({
+        callsign: { value: "PI4AB?", confidence: "low" },
+      }),
+    });
+
+    await service.start();
+    callbackHolder.callbacks?.onMessage("PI4AB? DE TEST", "UNKNOWN", { timestamp: "2026-02-13T00:00:00.000Z" });
+
+    assert.equal(api.dispatched.length, 1);
+    assert.equal(api.dispatched[0].peer, "PI4ABC");
+    assert.equal((api.dispatched[0].metadata?.qsoFields as Record<string, unknown>).callsign !== undefined, true);
   });
 });

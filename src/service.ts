@@ -13,7 +13,7 @@ import { scoreMessageConfidence } from "./decode-quality.js";
 import { extractQsoFields, lowConfidenceFields, type ExtractedQsoFields } from "./qso-extract.js";
 import { QsoMemoryStore, type QsoMemoryRecord } from "./qso-memory.js";
 import { isCallsign } from "./callsign.js";
-import type { Confidence } from "./fuzzy-match.js";
+import { fuzzyMatchCallsign, type Confidence } from "./fuzzy-match.js";
 
 interface PollerLike {
   start(): Promise<void>;
@@ -30,6 +30,7 @@ interface MemoryStore {
   initialize(): void;
   addRecord(record: QsoMemoryRecord): void;
   getByCallsign(callsign: string): QsoMemoryRecord[];
+  getKnownCallsigns(): string[];
 }
 
 export interface ServiceOptions {
@@ -130,6 +131,15 @@ function enrichInbound(
 ): EnrichedInbound {
   const messageConfidence = scoreMessageConfidence(text);
   const fields = extractFields(text, { peerHint: isCallsign(peer) ? peer : undefined });
+  const knownCallsigns = memoryStore.getKnownCallsigns();
+
+  if (fields.callsign && (fields.callsign.value.includes("?") || fields.callsign.confidence === "low")) {
+    const matched = fuzzyMatchCallsign(fields.callsign.value, knownCallsigns, 2);
+    if (matched) {
+      fields.callsign = { value: matched.toUpperCase(), confidence: "medium" };
+    }
+  }
+
   const lowFields = lowConfidenceFields(fields);
 
   const callsign = fields.callsign?.value ?? (isCallsign(peer) ? peer.toUpperCase() : undefined);
