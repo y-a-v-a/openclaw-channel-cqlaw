@@ -355,7 +355,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **5b.3** Implement ADIF field encoding: `<FIELDNAME:LENGTH>VALUE` format (e.g., `<CALL:6>DL2ABC`)
 - [x] **5b.4** Implement ADIF file header with `<ADIF_VER:5>3.1.4` and `<PROGRAMID>` and `<EOH>` marker
 - [x] **5b.5** Implement append-mode writing: new QSOs are appended to the log file, each terminated by `<EOR>` (end of record)
-- [ ] **5b.6** Implement the QSO field extractor: given a decoded conversation transcript, use the LLM (via agent tool or structured extraction) to extract:
+- [x] **5b.6** Implement the QSO field extractor: given a decoded conversation transcript, use the LLM (via agent tool or structured extraction) to extract:
   - Callsign of the other station
   - RST sent and received
   - Name
@@ -364,7 +364,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **5b.7** Derive band from frequency automatically (e.g., 7.030 MHz → `40m`)
 - [x] **5b.8** Record QSO start/end timestamps from message dispatch times
 - [x] **5b.9** Implement dupe detection: check if the same callsign has already been worked on the same band (and optionally same mode)
-- [ ] **5b.10** Flag dupes visually in agent responses and in the log
+- [x] **5b.10** Flag dupes visually in agent responses and in the log
 - [x] **5b.11** Store the ADIF log file at a configurable path (default: `~/.openclaw/cqlaw/log.adi`)
 - [ ] **5b.12** Implement log rotation or archival (optional): create a new log file per day/month or when size exceeds a threshold
 - [ ] **5b.13** Implement export to external logging software APIs (optional/future):
@@ -478,16 +478,16 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `high` — decoded clearly with no ambiguity
   - `medium` — decoded with minor uncertainty, contextually resolved
   - `low` — significant uncertainty, flagged for human review
-- [ ] **5f.5** Flag low-confidence fields visually in the log and agent responses
+- [x] **5f.5** Flag low-confidence fields visually in the log and agent responses
 - [x] **5f.6** Implement cross-repetition aggregation: CW operators typically send their callsign 2-3 times — aggregate across repetitions to build confidence
   - If first decode is `DL2A?C` and second is `DL2AB?`, merge to `DL2ABC`
-- [ ] **5f.7** Implement context-aware noise filtering: strip common decode artifacts (random characters from noise bursts, garbled prosigns)
-- [ ] **5f.8** Implement a "decode confidence" metric for entire messages based on the proportion of high-confidence vs low-confidence characters
+- [x] **5f.7** Implement context-aware noise filtering: strip common decode artifacts (random characters from noise bursts, garbled prosigns)
+- [x] **5f.8** Implement a "decode confidence" metric for entire messages based on the proportion of high-confidence vs low-confidence characters
 
 ### 5g. QSO Memory Across Sessions
 
-- [ ] **5g.1** Implement a persistent QSO database (beyond the ADIF log file) that stores structured contact records queryable by callsign
-- [ ] **5g.2** When a callsign is detected, automatically query the database for previous contacts
+- [x] **5g.1** Implement a persistent QSO database (beyond the ADIF log file) that stores structured contact records queryable by callsign
+- [x] **5g.2** When a callsign is detected, automatically query the database for previous contacts
 - [ ] **5g.3** Provide the agent with previous QSO context: last contact date, band, RST exchanged, name, QTH, any remarks
 - [ ] **5g.4** Enable the agent to reference previous contacts naturally: "Hello Hans, we last worked on 40 meters in March"
 - [ ] **5g.5** Combine QSO memory with QRZ.com data for rich context about returning stations

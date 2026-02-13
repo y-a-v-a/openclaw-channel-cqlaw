@@ -10,6 +10,7 @@ import { FldigiClient, XmlRpcError } from "./fldigi-client.js";
 import { SentenceBuffer } from "./sentence-buffer.js";
 import { extractCqCalls, extractDirectedExchanges, extractCallsigns } from "./callsign.js";
 import type { ChannelConfig } from "./config.js";
+import { filterDecodeNoise } from "./decode-quality.js";
 
 export type ChannelStatus = "connected" | "disconnected" | "reconnecting" | "error";
 
@@ -145,8 +146,11 @@ export class FldigiPoller {
         this.rxOffset = currentLength;
 
         if (newText) {
-          this.updatePeer(newText);
-          this.sentenceBuffer.push(newText);
+          const filtered = filterDecodeNoise(newText);
+          if (filtered) {
+            this.updatePeer(filtered);
+            this.sentenceBuffer.push(filtered);
+          }
         }
       }
 
