@@ -1,0 +1,211 @@
+# Decoder test fixtures for CW/Morse audio pipeline.
+#
+# Each fixture defines a plain-text Morse message, generation parameters,
+# and expected decode results. WAV files are generated from these definitions
+# via test/fixtures/generate-wavs.ts using the morse-pro library.
+#
+# Fields:
+#   id            - unique fixture identifier (becomes the WAV filename stem)
+#   text          - the plain-text message to encode as Morse
+#   wpm           - sending speed in words per minute
+#   tone_hz       - CW sidetone frequency in Hz
+#   sample_rate   - WAV sample rate in Hz
+#   noise         - noise parameters (type + snr_db), or "none"
+#   expect_exact  - if true, decoded output must match text exactly
+#   expect_contains - substrings that must appear in the decoded output
+#   description   - human-readable description of what the fixture tests
+
+fixtures:
+  # --- Clean signals (no noise) ---
+
+  - id: clean-cq
+    text: "CQ CQ DE PA3XYZ PA3XYZ K"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Standard CQ call at moderate speed, clean signal"
+
+  - id: clean-qso-exchange
+    text: "PA3XYZ DE DL2ABC RST 599 599 NAME HANS QTH BERLIN K"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Typical QSO exchange with RST, name, and QTH"
+
+  - id: clean-qso-signoff
+    text: "DL2ABC DE PA3XYZ TU 73 ES HPE CUAGN SK"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "QSO sign-off with 73 and SK prosign"
+
+  - id: clean-qrl-check
+    text: "QRL?"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Frequency-in-use check before transmitting"
+
+  - id: clean-contest-exchange
+    text: "DL2ABC 5NN 14"
+    wpm: 28
+    tone_hz: 600
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Fast contest exchange (CQ WW style: RST + zone)"
+
+  - id: clean-compound-callsign
+    text: "CQ CQ DE PA3XYZ/P PA3XYZ/P K"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "CQ with portable compound callsign"
+
+  # --- Speed variations ---
+
+  - id: slow-beginner
+    text: "CQ CQ DE W1AW W1AW K"
+    wpm: 10
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Slow beginner speed CQ call"
+
+  - id: fast-contest
+    text: "CQ TEST W1AW W1AW TEST"
+    wpm: 32
+    tone_hz: 600
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Fast contest CQ at 32 WPM"
+
+  # --- Different tone frequencies ---
+
+  - id: low-tone
+    text: "CQ CQ DE JA1ABC K"
+    wpm: 20
+    tone_hz: 500
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "CQ at lower sidetone frequency"
+
+  - id: high-tone
+    text: "CQ CQ DE VU2ABC K"
+    wpm: 20
+    tone_hz: 850
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "CQ at higher sidetone frequency"
+
+  # --- Noisy signals ---
+
+  - id: noisy-strong
+    text: "CQ CQ DE PA3XYZ PA3XYZ K"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise:
+      type: white
+      snr_db: 20
+    expect_exact: true
+    description: "Strong signal with light noise — should decode cleanly"
+
+  - id: noisy-moderate
+    text: "CQ CQ DE PA3XYZ PA3XYZ K"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise:
+      type: white
+      snr_db: 10
+    expect_exact: false
+    expect_contains:
+      - "CQ"
+      - "PA3XYZ"
+    description: "Moderate noise — callsign should still be extractable"
+
+  - id: noisy-weak
+    text: "CQ CQ DE PA3XYZ PA3XYZ K"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise:
+      type: white
+      snr_db: 3
+    expect_exact: false
+    expect_contains:
+      - "PA3XYZ"
+    description: "Weak signal buried in noise — partial decode expected"
+
+  # --- Prosign detection ---
+
+  - id: prosign-ar
+    text: "TEST MESSAGE AR"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Message ending with AR (end of message)"
+
+  - id: prosign-sk
+    text: "73 DE PA3XYZ SK"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Message ending with SK (end of contact)"
+
+  - id: prosign-bk
+    text: "PA3XYZ DE DL2ABC BK"
+    wpm: 20
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Break-in keying message"
+
+  # --- Full QSO sequence (multi-turn) ---
+
+  - id: full-qso-cq
+    text: "CQ CQ CQ DE PA3XYZ PA3XYZ PA3XYZ K"
+    wpm: 18
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Opening CQ call of a full QSO"
+
+  - id: full-qso-reply
+    text: "PA3XYZ DE DL2ABC DL2ABC KN"
+    wpm: 18
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Reply to CQ with KN (named station only)"
+
+  - id: full-qso-info
+    text: "DL2ABC DE PA3XYZ GM UR RST 579 579 NAME VINCENT QTH AMSTERDAM KN"
+    wpm: 18
+    tone_hz: 700
+    sample_rate: 48000
+    noise: none
+    expect_exact: true
+    description: "Info exchange with RST, name, QTH"

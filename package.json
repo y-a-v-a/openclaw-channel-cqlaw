@@ -10,17 +10,26 @@
     "build": "tsc",
     "test": "node --test dist/test/**/*.test.js",
     "pretest": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate-fixtures": "tsc && node dist/test/fixtures/generate-wavs.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/y-a-v-a/openclaw-channel-cqlaw.git"
   },
-  "keywords": ["openclaw", "morse", "cw", "ham-radio", "sdr", "fldigi"],
+  "keywords": [
+    "openclaw",
+    "morse",
+    "cw",
+    "ham-radio",
+    "sdr",
+    "fldigi"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "yaml": "^2.8.2"
   }
 }

@@ -518,7 +518,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 6.1 Test Fixture Generation
 
-- [ ] **6.1.1** Create a Morse code WAV generator script:
+- [x] **6.1.1** Create a Morse code WAV generator script:
   - Input: plain text string, WPM speed, tone frequency (default 700 Hz), sample rate (default 48000)
   - Output: PCM WAV file with mathematically precise Morse timing:
     - Dit duration = 1200 / WPM (ms)
@@ -527,11 +527,15 @@ This document defines every task required to fully implement the OpenClaw QC (CW
     - Inter-character gap = 3 × dit
     - Inter-word gap = 7 × dit
   - Pure sine wave generation, no external audio tools needed
-- [ ] **6.1.2** Generate the clean fixture set:
-  - `clean-cq.wav` — `"CQ CQ DE PA3XYZ K"` at 20 WPM, no noise
-  - `clean-qso.wav` — Full QSO exchange at 20 WPM, no noise
-  - `clean-contest.wav` — Contest exchange at 28 WPM
-- [ ] **6.1.3** Generate the noisy fixture set (add white noise at various S/N ratios):
+  - **Implementation:** `test/fixtures/morse-wav.ts` — zero-dependency WAV generator with raised-cosine key-click suppression and Gaussian white noise injection. YAML-driven fixture definitions in `test/fixtures/decoder-tests.yaml`, generator script in `test/fixtures/generate-wavs.ts`. Run via `npm run generate-fixtures`.
+- [x] **6.1.2** Generate the clean fixture set:
+  - `clean-cq.wav` — `"CQ CQ DE PA3XYZ PA3XYZ K"` at 20 WPM, no noise
+  - `clean-qso-exchange.wav` — Full QSO exchange at 20 WPM, no noise
+  - `clean-qso-signoff.wav` — QSO sign-off with 73 and SK at 20 WPM, no noise
+  - `clean-qrl-check.wav` — `"QRL?"` at 20 WPM, no noise
+  - `clean-contest-exchange.wav` — Contest exchange at 28 WPM, no noise
+  - `clean-compound-callsign.wav` — CQ with portable `/P` callsign at 20 WPM, no noise
+- [x] **6.1.3** Generate the noisy fixture set (add white noise at various S/N ratios):
   - `noisy-strong.wav` — S/N ~20 dB (easy decode)
   - `noisy-moderate.wav` — S/N ~10 dB (some errors expected)
   - `noisy-weak.wav` — S/N ~3 dB (heavy errors, partial decode)
@@ -539,30 +543,33 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - `qrm-two-stations.wav` — Two Morse signals at different pitches (300 Hz apart)
 - [ ] **6.1.5** Generate the QSB (fading) fixture set:
   - `qsb-fading.wav` — Signal with periodic sinusoidal amplitude fading
-- [ ] **6.1.6** Generate speed variation fixtures:
-  - `fast-contest.wav` — 30 WPM contest exchange
-  - `slow-beginner.wav` — 10 WPM with long gaps
-- [ ] **6.1.7** Create corresponding expected-output transcript files for each WAV fixture
+- [x] **6.1.6** Generate speed variation fixtures:
+  - `fast-contest.wav` — 32 WPM contest CQ
+  - `slow-beginner.wav` — 10 WPM CQ with long gaps
+  - `low-tone.wav` — 20 WPM at 500 Hz sidetone
+  - `high-tone.wav` — 20 WPM at 850 Hz sidetone
+- [x] **6.1.7** Create corresponding expected-output transcript files for each WAV fixture
+  - **Implementation:** Expected outputs are defined inline in `test/fixtures/decoder-tests.yaml` alongside each fixture (`expect_exact`, `expect_contains` fields). Prosign-terminated and full QSO sequence fixtures also included.
 
 ### 6.2 Unit Tests — Sentence Buffer
 
-- [ ] **6.2.1** Test basic character accumulation: feed characters one at a time, verify buffer contents
-- [ ] **6.2.2** Test silence-based flush: feed text, wait past the silence threshold, verify message is dispatched
-- [ ] **6.2.3** Test prosign-based flush: feed text ending with `AR`, verify immediate flush
-- [ ] **6.2.4** Test `SK` prosign flush
-- [ ] **6.2.5** Test `K` prosign flush
-- [ ] **6.2.6** Test `KN` prosign flush
-- [ ] **6.2.7** Test `BK` prosign flush
-- [ ] **6.2.8** Test word boundary detection: verify spaces are correctly preserved between words
-- [ ] **6.2.9** Test rapid text burst: many characters in quick succession, verify single message dispatched after silence
-- [ ] **6.2.10** Test empty buffer: no characters received, verify no spurious dispatches
-- [ ] **6.2.11** Test whitespace normalization: multiple spaces collapsed, leading/trailing whitespace stripped
-- [ ] **6.2.12** Test configurable silence threshold: verify different threshold values produce correct flush timing
+- [x] **6.2.1** Test basic character accumulation: feed characters one at a time, verify buffer contents
+- [x] **6.2.2** Test silence-based flush: feed text, wait past the silence threshold, verify message is dispatched
+- [x] **6.2.3** Test prosign-based flush: feed text ending with `AR`, verify immediate flush
+- [x] **6.2.4** Test `SK` prosign flush
+- [x] **6.2.5** Test `K` prosign flush
+- [x] **6.2.6** Test `KN` prosign flush
+- [x] **6.2.7** Test `BK` prosign flush
+- [x] **6.2.8** Test word boundary detection: verify spaces are correctly preserved between words
+- [x] **6.2.9** Test rapid text burst: many characters in quick succession, verify single message dispatched after silence
+- [x] **6.2.10** Test empty buffer: no characters received, verify no spurious dispatches
+- [x] **6.2.11** Test whitespace normalization: multiple spaces collapsed, leading/trailing whitespace stripped
+- [x] **6.2.12** Test configurable silence threshold: verify different threshold values produce correct flush timing
 
 ### 6.3 Unit Tests — Contact Log Extraction
 
-- [ ] **6.3.1** Test clean QSO transcript: extract callsign, RST, name, QTH from a perfectly decoded exchange
-- [ ] **6.3.2** Test noisy QSO transcript: extract fields from a transcript with `?` characters and garbled text
+- [x] **6.3.1** Test clean QSO transcript: extract callsign, RST, name, QTH from a perfectly decoded exchange
+- [x] **6.3.2** Test noisy QSO transcript: extract fields from a transcript with `?` characters and garbled text
 - [ ] **6.3.3** Test partial QSO: extract whatever fields are available from an interrupted/incomplete exchange
 - [ ] **6.3.4** Test contest exchange extraction: extract RST + zone from a CQ WW exchange
 - [ ] **6.3.5** Test contest exchange extraction: extract RST + serial number from a CQ WPX exchange
@@ -570,26 +577,26 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 6.4 Unit Tests — ADIF Writer
 
-- [ ] **6.4.1** Test single record output: verify correct `<FIELD:LENGTH>VALUE` formatting
-- [ ] **6.4.2** Test header output: verify `<ADIF_VER>`, `<PROGRAMID>`, `<EOH>` present
-- [ ] **6.4.3** Test multi-record append: verify multiple records each terminated by `<EOR>`
-- [ ] **6.4.4** Test special characters: verify fields with spaces, punctuation, etc. are handled correctly
-- [ ] **6.4.5** Test all supported field types from task 5b.2
+- [x] **6.4.1** Test single record output: verify correct `<FIELD:LENGTH>VALUE` formatting
+- [x] **6.4.2** Test header output: verify `<ADIF_VER>`, `<PROGRAMID>`, `<EOH>` present
+- [x] **6.4.3** Test multi-record append: verify multiple records each terminated by `<EOR>`
+- [x] **6.4.4** Test special characters: verify fields with spaces, punctuation, etc. are handled correctly
+- [x] **6.4.5** Test all supported field types from task 5b.2
 
 ### 6.5 Unit Tests — Callsign Extraction
 
-- [ ] **6.5.1** Test standard callsign formats: `W1AW`, `PA3XYZ`, `VU2ABC`, `JA1ABC`
-- [ ] **6.5.2** Test compound callsigns: `PA3XYZ/P`, `DL2ABC/MM`, `W1AW/4`
-- [ ] **6.5.3** Test `CQ DE <callsign>` pattern detection
-- [ ] **6.5.4** Test `<call1> DE <call2>` pattern detection
-- [ ] **6.5.5** Test callsign with noise characters: `PA3X?Z` — verify uncertainty is flagged
+- [x] **6.5.1** Test standard callsign formats: `W1AW`, `PA3XYZ`, `VU2ABC`, `JA1ABC`
+- [x] **6.5.2** Test compound callsigns: `PA3XYZ/P`, `DL2ABC/MM`, `W1AW/4`
+- [x] **6.5.3** Test `CQ DE <callsign>` pattern detection
+- [x] **6.5.4** Test `<call1> DE <call2>` pattern detection
+- [x] **6.5.5** Test callsign with noise characters: `PA3X?Z` — verify uncertainty is flagged
 
 ### 6.6 Unit Tests — Error Correction
 
-- [ ] **6.6.1** Test fuzzy callsign matching: `PA3X?Z` → `PA3XYZ` with QRZ database mock
-- [ ] **6.6.2** Test RST contextual reconstruction: `5?9` → `599`
-- [ ] **6.6.3** Test cross-repetition aggregation: `DL2A?C` + `DL2AB?` → `DL2ABC`
-- [ ] **6.6.4** Test confidence scoring: verify high/medium/low assignments for various input quality levels
+- [x] **6.6.1** Test fuzzy callsign matching: `PA3X?Z` → `PA3XYZ` with QRZ database mock
+- [x] **6.6.2** Test RST contextual reconstruction: `5?9` → `599`
+- [x] **6.6.3** Test cross-repetition aggregation: `DL2A?C` + `DL2AB?` → `DL2ABC`
+- [x] **6.6.4** Test confidence scoring: verify high/medium/low assignments for various input quality levels
 
 ### 6.7 Integration Tests — Mock XML-RPC
 
