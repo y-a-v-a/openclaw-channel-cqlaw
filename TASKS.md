@@ -600,12 +600,13 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 6.7 Integration Tests — Mock XML-RPC
 
-- [ ] **6.7.1** Create a mock XML-RPC server that replays recorded fldigi response sequences
-- [ ] **6.7.2** Test normal flow: simulate a steady stream of decoded text, verify correct message dispatch
-- [ ] **6.7.3** Test fldigi restart mid-QSO: simulate connection drop and reconnect, verify graceful recovery
-- [ ] **6.7.4** Test XML-RPC timeout: simulate slow responses, verify timeout handling
-- [ ] **6.7.5** Test empty buffer for extended periods: verify no spurious dispatches, polling continues
-- [ ] **6.7.6** Test burst of rapid text: simulate fast contest exchange, verify correct buffering
+- [x] **6.7.1** Create a mock XML-RPC server that replays recorded fldigi response sequences
+  - **Implementation:** `test/mock-fldigi.ts` — reusable mock with controllable RX buffer, configurable response delay, fault injection, connection rejection, and call logging.
+- [x] **6.7.2** Test normal flow: simulate a steady stream of decoded text, verify correct message dispatch
+- [x] **6.7.3** Test fldigi restart mid-QSO: simulate connection drop and reconnect, verify graceful recovery
+- [x] **6.7.4** Test XML-RPC timeout: simulate slow responses, verify timeout handling
+- [x] **6.7.5** Test empty buffer for extended periods: verify no spurious dispatches, polling continues
+- [x] **6.7.6** Test burst of rapid text: simulate fast contest exchange, verify correct buffering
 
 ### 6.8 Integration Tests — Fldigi Decode Chain
 
