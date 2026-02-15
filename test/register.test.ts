@@ -24,4 +24,29 @@ describe("register", () => {
     assert.equal(services.length, 1);
     assert.equal(services[0].id, "morse-radio-service");
   });
+
+  it("logs registration lifecycle", () => {
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message?: unknown, ...optional: unknown[]) => {
+      logs.push(String(message ?? ""));
+      if (optional.length > 0) {
+        logs.push(optional.map((part) => String(part)).join(" "));
+      }
+    };
+
+    try {
+      const api: OpenClawApi = {
+        registerChannel: () => {},
+        registerService: () => {},
+        dispatchInbound: () => {},
+      };
+      register(api);
+    } finally {
+      console.log = originalLog;
+    }
+
+    assert.ok(logs.some((line) => line.includes("Registering morse-radio channel")));
+    assert.ok(logs.some((line) => line.includes("Registration complete")));
+  });
 });

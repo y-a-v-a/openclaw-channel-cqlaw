@@ -26,6 +26,18 @@ describe("resolveConfig", () => {
     assert.equal(config.fldigi.host, "127.0.0.1");
     assert.equal(config.mode, "CW");
   });
+
+  it("loads sensitive fields from environment variables", () => {
+    const config = resolveConfig({}, {
+      CQLAW_TX_CALLSIGN: " pa3xyz ",
+      CQLAW_QRZ_USERNAME: "demo-user",
+      CQLAW_QRZ_PASSWORD: "secret-pass",
+    } as NodeJS.ProcessEnv);
+
+    assert.equal(config.tx.callsign, "PA3XYZ");
+    assert.equal(config.qrz.username, "demo-user");
+    assert.equal(config.qrz.password, "secret-pass");
+  });
 });
 
 describe("validateConfig", () => {
@@ -95,5 +107,17 @@ describe("validateConfig", () => {
     const config = { ...validConfig(), tx: { ...validConfig().tx, wpm: 3 } };
     const errors = validateConfig(config);
     assert.ok(errors.some(e => e.field === "tx.wpm"));
+  });
+
+  it("requires QRZ password when QRZ username is set", () => {
+    const config = { ...validConfig(), qrz: { username: "pa3xyz", password: "" } };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "qrz.password"));
+  });
+
+  it("requires QRZ username when QRZ password is set", () => {
+    const config = { ...validConfig(), qrz: { username: "", password: "secret" } };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "qrz.username"));
   });
 });

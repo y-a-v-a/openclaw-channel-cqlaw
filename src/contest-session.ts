@@ -11,12 +11,26 @@ import {
   parseContestExchange,
 } from "./contest.js";
 import { ContestDupeSheet } from "./contest-dupe-sheet.js";
-import { ContestScorer, type ScoreSnapshot } from "./contest-scoring.js";
+import { exportCabrillo, type CabrilloHeader } from "./cabrillo.js";
+import { calculateRateMetrics, type ContestRateMetrics } from "./contest-rate.js";
+import { ContestScorer, type MultiplierAlert, type ScoreSnapshot } from "./contest-scoring.js";
+
+export interface ContestContactLog {
+  timestamp: Date;
+  band: string;
+  parsed: ParsedContestExchange;
+  isDupe: boolean;
+  score: ScoreSnapshot;
+  multiplierAlerts: MultiplierAlert[];
+}
 
 export interface ContestContactResult {
   parsed: ParsedContestExchange;
   isDupe: boolean;
   score: ScoreSnapshot;
+  multiplierAlerts: MultiplierAlert[];
+  shouldAlertMultiplier: boolean;
+  rate: ContestRateMetrics | null;
 }
 
 export class ContestSessionManager {
@@ -25,6 +39,7 @@ export class ContestSessionManager {
   private nextSerialNumber = 1;
   private dupeSheet = new ContestDupeSheet();
   private scorer = new ContestScorer();
+  private contacts: ContestContactLog[] = [];
 
   activate(contestId: string, startSerial = 1): ContestProfile {
     const profile = getContestProfile(contestId);
@@ -37,6 +52,7 @@ export class ContestSessionManager {
     this.nextSerialNumber = Math.max(1, startSerial);
     this.dupeSheet = new ContestDupeSheet();
     this.scorer = new ContestScorer();
+    this.contacts = [];
     return profile;
   }
 
@@ -77,6 +93,9 @@ export class ContestSessionManager {
         parsed: {},
         isDupe: false,
         score: this.scorer.snapshot(),
+        multiplierAlerts: [],
+        shouldAlertMultiplier: false,
+        rate: null,
       };
     }
 
@@ -87,11 +106,84 @@ export class ContestSessionManager {
       this.dupeSheet.markWorked(call, band);
     }
 
-    const score = this.scorer.scoreContact(this.activeProfile, parsed, band, isDupe);
+    const scoreUpdate = this.scorer.scoreContact(this.activeProfile, parsed, band, isDupe);
     if (!isDupe) {
       this.nextSerialNumber += 1;
     }
 
-    return { parsed, isDupe, score };
+    const logEntry: ContestContactLog = {
+      timestamp: new Date(),
+      band,
+      parsed,
+      isDupe,
+      score: scoreUpdate.snapshot,
+      multiplierAlerts: scoreUpdate.newMultipliers,
+    };
+    this.contacts.push(logEntry);
+
+    return {
+      parsed,
+      isDupe,
+      score: scoreUpdate.snapshot,
+      multiplierAlerts: scoreUpdate.newMultipliers,
+      shouldAlertMultiplier: scoreUpdate.newMultipliers.length > 0,
+      rate: this.rateMetrics(),
+    };
   }
+
+  rateMetrics(now = new Date()): ContestRateMetrics | null {
+    if (!this.activeProfile || !this.activatedAt) return null;
+    return calculateRateMetrics(
+      this.contacts.map((entry) => ({
+        timestamp: entry.timestamp,
+        isDupe: entry.isDupe,
+        totalScoreAfterContact: entry.score.totalScore,
+      })),
+      this.activatedAt,
+      now,
+      this.activeProfile.duration,
+    );
+  }
+
+  getContacts(): ReadonlyArray<ContestContactLog> {
+    return this.contacts;
+  }
+
+  exportCabrillo(input: Omit<CabrilloHeader, "contestId"> & { sentExchange?: string }): string {
+    if (!this.activeProfile) {
+      throw new Error("No active contest session");
+    }
+
+    const qsos = this.contacts
+      .filter((entry) => !entry.isDupe && entry.parsed.callsign)
+      .map((entry, index) => ({
+        timestamp: entry.timestamp,
+        band: entry.band,
+        ownCallsign: input.callsign,
+        theirCallsign: entry.parsed.callsign!,
+        sentRst: "599",
+        sentExchange: input.sentExchange ?? String(index + 1).padStart(3, "0"),
+        rcvdRst: entry.parsed.rst ?? "599",
+        rcvdExchange: renderReceivedExchange(entry.parsed),
+      }));
+
+    return exportCabrillo(
+      {
+        ...input,
+        contestId: this.activeProfile.contestId,
+      },
+      qsos,
+    );
+  }
+}
+
+function renderReceivedExchange(parsed: ParsedContestExchange): string {
+  const parts: string[] = [];
+  if (parsed.zone !== undefined) parts.push(String(parsed.zone));
+  if (parsed.serial !== undefined) parts.push(String(parsed.serial));
+  if (parsed.category) parts.push(parsed.category);
+  if (parsed.precedence) parts.push(parsed.precedence);
+  if (parsed.check) parts.push(parsed.check);
+  if (parsed.section) parts.push(parsed.section);
+  return parts.join(" ");
 }

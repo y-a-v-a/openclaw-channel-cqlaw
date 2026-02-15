@@ -13,6 +13,32 @@ describe("createSendTextHandler", () => {
     assert.equal(result.success, true);
   });
 
+  it("logs outbound text via stub for smoke visibility", async () => {
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (message?: unknown, ...optional: unknown[]) => {
+      logs.push(String(message ?? ""));
+      if (optional.length > 0) {
+        logs.push(optional.map((part) => String(part)).join(" "));
+      }
+    };
+
+    try {
+      const handler = createSendTextHandler(null);
+      const result = await handler({
+        text: "TNX FER QSO 73",
+        peer: "PI4ABC",
+        channel: "morse-radio",
+      });
+      assert.equal(result.success, true);
+    } finally {
+      console.log = originalLog;
+    }
+
+    assert.ok(logs.some((line) => line.includes("[CW-TX-STUB]")));
+    assert.ok(logs.some((line) => line.includes("TNX FER QSO 73")));
+  });
+
   it("falls back to default intent when metadata txIntent is invalid", async () => {
     const calls: Array<{ text: string; intent: string; peerCall?: string }> = [];
     const handler = createSendTextHandler({

@@ -65,7 +65,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [ ] **1.6.2** Verify the gateway logs show the `morse-radio` channel registered successfully
 - [ ] **1.6.3** Verify the hardcoded test string `"CQ CQ DE PI4ABC"` appears in the agent session as an inbound message
 - [ ] **1.6.4** Verify the agent's response is logged by the `outbound.sendText` stub
-- [ ] **1.6.5** Write a smoke test script that automates the above verification steps
+- [x] **1.6.5** Write a smoke test script that automates the above verification steps
 
 ---
 
@@ -452,14 +452,14 @@ This document defines every task required to fully implement the OpenClaw QC (CW
   - In-memory lookup of all worked callsigns per band
   - Instant detection when a callsign has already been worked on the current band
   - Flag dupes to the agent so it can skip or QSY
-- [ ] **5e.6** Implement rate tracking:
+- [x] **5e.6** Implement rate tracking:
   - Contacts per hour (current rate, average rate, peak rate)
   - Projected final score based on current rate
   - Rate chart data for display
-- [ ] **5e.7** Implement multiplier tracking and alerts:
+- [x] **5e.7** Implement multiplier tracking and alerts:
   - Flag when a decoded callsign is a new multiplier (new country, new zone, etc.)
   - Prioritize new multipliers — the agent should alert the operator that a new multiplier is available
-- [ ] **5e.8** Implement Cabrillo log export:
+- [x] **5e.8** Implement Cabrillo log export:
   - Cabrillo is the standard contest log submission format
   - Generate a valid Cabrillo file from the contest session data
   - Include header fields: contest ID, callsign, category, club, operators, etc.
@@ -640,10 +640,10 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 6.11 CI Pipeline Configuration
 
-- [ ] **6.11.1** Configure the **fast** tier (every commit):
+- [x] **6.11.1** Configure the **fast** tier (every commit):
   - Unit tests for buffer logic, callsign extraction, log extraction, ADIF writer, error correction
   - No external dependencies, runs in seconds
-- [ ] **6.11.2** Configure the **medium** tier (every PR):
+- [x] **6.11.2** Configure the **medium** tier (every PR):
   - Plugin integration tests with mocked XML-RPC
   - No fldigi needed, runs in seconds
 - [ ] **6.11.3** Configure the **slow** tier (nightly / pre-release):
@@ -671,10 +671,10 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 7.2 Configuration and Secrets Management
 
-- [ ] **7.2.1** Ensure sensitive config values (QRZ.com password, callsign) can be provided via environment variables
-- [ ] **7.2.2** Add a `.env.example` file documenting all environment variables
-- [ ] **7.2.3** Ensure `.env` is in `.gitignore`
-- [ ] **7.2.4** Validate all required configuration at plugin startup with clear error messages
+- [x] **7.2.1** Ensure sensitive config values (QRZ.com password, callsign) can be provided via environment variables
+- [x] **7.2.2** Add a `.env.example` file documenting all environment variables
+- [x] **7.2.3** Ensure `.env` is in `.gitignore`
+- [x] **7.2.4** Validate all required configuration at plugin startup with clear error messages
 
 ### 7.3 Documentation
 

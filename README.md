@@ -42,6 +42,18 @@ The plugin reads its configuration from the `openclaw.json` channel config. All 
 | `tx.wpm` | number | `20` | Default transmit speed (words per minute) |
 | `tx.callsign` | string | `""` | Station callsign (required for TX) |
 | `tx.pttMethod` | string | `"none"` | PTT method: `"cat"`, `"vox"`, `"serial"`, `"none"` |
+| `qrz.username` | string | `""` | QRZ XML API username (optional, for callsign enrichment) |
+| `qrz.password` | string | `""` | QRZ XML API password or key (optional, can be provided via env var) |
+
+Environment variable overrides (useful for secrets and deployment):
+
+- `CQLAW_TX_CALLSIGN` (or `OPENCLAW_TX_CALLSIGN`)
+- `CQLAW_QRZ_USERNAME`
+- `CQLAW_QRZ_PASSWORD`
+- `CQLAW_FREQUENCY`, `CQLAW_MODE`
+- `CQLAW_FLDIGI_HOST`, `CQLAW_FLDIGI_PORT`, `CQLAW_FLDIGI_POLLING_INTERVAL_MS`
+- `CQLAW_SDR_ENABLED`, `CQLAW_SDR_DEVICE`, `CQLAW_SDR_SAMPLE_RATE`
+- `CQLAW_TX_ENABLED`, `CQLAW_TX_INHIBIT`, `CQLAW_TX_MAX_DURATION_SECONDS`, `CQLAW_TX_WPM`, `CQLAW_TX_PTT_METHOD`
 
 ## Development
 

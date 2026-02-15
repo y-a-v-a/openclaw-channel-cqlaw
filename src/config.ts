@@ -26,12 +26,18 @@ export interface TxConfig {
   pttMethod: "cat" | "vox" | "serial" | "none";
 }
 
+export interface QrzConfig {
+  username: string;
+  password: string;
+}
+
 export interface ChannelConfig {
   frequency: number;
   mode: string;
   fldigi: FldigiConfig;
   sdr: SdrConfig;
   tx: TxConfig;
+  qrz: QrzConfig;
 }
 
 const FLDIGI_DEFAULTS: FldigiConfig = {
@@ -55,12 +61,18 @@ const TX_DEFAULTS: TxConfig = {
   pttMethod: "none",
 };
 
+const QRZ_DEFAULTS: QrzConfig = {
+  username: "",
+  password: "",
+};
+
 const CONFIG_DEFAULTS: ChannelConfig = {
   frequency: 7030000,
   mode: "CW",
   fldigi: FLDIGI_DEFAULTS,
   sdr: SDR_DEFAULTS,
   tx: TX_DEFAULTS,
+  qrz: QRZ_DEFAULTS,
 };
 
 export interface ConfigValidationError {
@@ -101,6 +113,13 @@ export function validateConfig(config: ChannelConfig): ConfigValidationError[] {
     errors.push({ field: "tx.callsign", message: "Callsign must match amateur radio format (e.g. PA3XYZ)" });
   }
 
+  if (config.qrz.username && !config.qrz.password) {
+    errors.push({ field: "qrz.password", message: "QRZ password is required when qrz.username is set (or set CQLAW_QRZ_PASSWORD)" });
+  }
+  if (config.qrz.password && !config.qrz.username) {
+    errors.push({ field: "qrz.username", message: "QRZ username is required when qrz.password is set (or set CQLAW_QRZ_USERNAME)" });
+  }
+
   if (!Number.isFinite(config.tx.wpm) || config.tx.wpm < 5 || config.tx.wpm > 60) {
     errors.push({ field: "tx.wpm", message: "WPM must be between 5 and 60" });
   }
@@ -121,15 +140,107 @@ export interface PartialChannelConfig {
   fldigi?: Partial<FldigiConfig>;
   sdr?: Partial<SdrConfig>;
   tx?: Partial<TxConfig>;
+  qrz?: Partial<QrzConfig>;
 }
 
-export function resolveConfig(partial: PartialChannelConfig): ChannelConfig {
-  const callsign = partial.tx?.callsign ?? TX_DEFAULTS.callsign;
+export function resolveConfig(partial: PartialChannelConfig, env: NodeJS.ProcessEnv = process.env): ChannelConfig {
+  const envConfig = resolveEnvConfig(env);
+  const callsign = partial.tx?.callsign ?? envConfig.tx?.callsign ?? TX_DEFAULTS.callsign;
   return {
-    frequency: partial.frequency ?? CONFIG_DEFAULTS.frequency,
-    mode: partial.mode ?? CONFIG_DEFAULTS.mode,
-    fldigi: { ...FLDIGI_DEFAULTS, ...partial.fldigi },
-    sdr: { ...SDR_DEFAULTS, ...partial.sdr },
-    tx: { ...TX_DEFAULTS, ...partial.tx, callsign: callsign.toUpperCase().trim() },
+    frequency: partial.frequency ?? envConfig.frequency ?? CONFIG_DEFAULTS.frequency,
+    mode: partial.mode ?? envConfig.mode ?? CONFIG_DEFAULTS.mode,
+    fldigi: { ...FLDIGI_DEFAULTS, ...envConfig.fldigi, ...partial.fldigi },
+    sdr: { ...SDR_DEFAULTS, ...envConfig.sdr, ...partial.sdr },
+    tx: { ...TX_DEFAULTS, ...envConfig.tx, ...partial.tx, callsign: callsign.toUpperCase().trim() },
+    qrz: {
+      ...QRZ_DEFAULTS,
+      ...envConfig.qrz,
+      ...partial.qrz,
+      username: (partial.qrz?.username ?? envConfig.qrz?.username ?? QRZ_DEFAULTS.username).trim(),
+      password: (partial.qrz?.password ?? envConfig.qrz?.password ?? QRZ_DEFAULTS.password).trim(),
+    },
   };
+}
+
+function resolveEnvConfig(env: NodeJS.ProcessEnv): PartialChannelConfig {
+  const fldigi = definedValues<Partial<FldigiConfig>>({
+    host: envString(env, "CQLAW_FLDIGI_HOST"),
+    port: envInt(env, "CQLAW_FLDIGI_PORT"),
+    pollingIntervalMs: envInt(env, "CQLAW_FLDIGI_POLLING_INTERVAL_MS"),
+  });
+  const sdr = definedValues<Partial<SdrConfig>>({
+    enabled: envBoolean(env, "CQLAW_SDR_ENABLED"),
+    device: envString(env, "CQLAW_SDR_DEVICE"),
+    sampleRate: envInt(env, "CQLAW_SDR_SAMPLE_RATE"),
+  });
+  const tx = definedValues<Partial<TxConfig>>({
+    enabled: envBoolean(env, "CQLAW_TX_ENABLED"),
+    inhibit: envBoolean(env, "CQLAW_TX_INHIBIT"),
+    maxDurationSeconds: envInt(env, "CQLAW_TX_MAX_DURATION_SECONDS"),
+    wpm: envInt(env, "CQLAW_TX_WPM"),
+    callsign: envString(env, "CQLAW_TX_CALLSIGN") ?? envString(env, "OPENCLAW_TX_CALLSIGN"),
+    pttMethod: envPttMethod(env, "CQLAW_TX_PTT_METHOD"),
+  });
+  const qrz = definedValues<Partial<QrzConfig>>({
+    username: envString(env, "CQLAW_QRZ_USERNAME"),
+    password: envString(env, "CQLAW_QRZ_PASSWORD"),
+  });
+
+  return {
+    frequency: envNumber(env, "CQLAW_FREQUENCY"),
+    mode: envString(env, "CQLAW_MODE"),
+    fldigi: Object.keys(fldigi).length > 0 ? fldigi : undefined,
+    sdr: Object.keys(sdr).length > 0 ? sdr : undefined,
+    tx: Object.keys(tx).length > 0 ? tx : undefined,
+    qrz: Object.keys(qrz).length > 0 ? qrz : undefined,
+  };
+}
+
+function envString(env: NodeJS.ProcessEnv, key: string): string | undefined {
+  const value = env[key];
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
+}
+
+function envNumber(env: NodeJS.ProcessEnv, key: string): number | undefined {
+  const value = envString(env, key);
+  if (value === undefined) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function envInt(env: NodeJS.ProcessEnv, key: string): number | undefined {
+  const value = envString(env, key);
+  if (value === undefined) return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) ? parsed : undefined;
+}
+
+function envBoolean(env: NodeJS.ProcessEnv, key: string): boolean | undefined {
+  const value = envString(env, key);
+  if (value === undefined) return undefined;
+  if (value === "1" || value.toLowerCase() === "true") return true;
+  if (value === "0" || value.toLowerCase() === "false") return false;
+  return undefined;
+}
+
+function envPttMethod(env: NodeJS.ProcessEnv, key: string): TxConfig["pttMethod"] | undefined {
+  const value = envString(env, key);
+  if (!value) return undefined;
+  const normalized = value.toLowerCase();
+  if (normalized === "cat" || normalized === "vox" || normalized === "serial" || normalized === "none") {
+    return normalized;
+  }
+  return undefined;
+}
+
+function definedValues<T extends Record<string, unknown>>(input: T): Partial<T> {
+  const out: Partial<T> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (value !== undefined) {
+      (out as Record<string, unknown>)[key] = value;
+    }
+  }
+  return out;
 }

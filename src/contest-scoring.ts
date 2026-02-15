@@ -4,11 +4,25 @@
 
 import type { ContestProfile, ParsedContestExchange } from "./contest.js";
 
+export type MultiplierKind = "zone" | "country" | "prefix" | "section";
+
+export interface MultiplierAlert {
+  kind: MultiplierKind;
+  band: string;
+  value: string;
+  label: string;
+}
+
 export interface ScoreSnapshot {
   points: number;
   multiplierCount: number;
   totalScore: number;
   qsoCount: number;
+}
+
+export interface ScoreUpdate {
+  snapshot: ScoreSnapshot;
+  newMultipliers: MultiplierAlert[];
 }
 
 export class ContestScorer {
@@ -19,16 +33,42 @@ export class ContestScorer {
   private readonly sectionMultipliers = new Set<string>();
   private readonly countryMultipliers = new Set<string>();
 
+  detectNewMultipliers(profile: ContestProfile, exchange: ParsedContestExchange, band: string): MultiplierAlert[] {
+    const alerts: MultiplierAlert[] = [];
+
+    if (profile.contestId === "CQWW" || profile.contestId === "IARU-HF") {
+      if (exchange.zone !== undefined) {
+        this.checkPotential(this.zoneMultipliers, `${band}:${exchange.zone}`, "zone", band, String(exchange.zone), alerts);
+      }
+      if (exchange.callsign) {
+        const country = callsignCountryKey(exchange.callsign);
+        this.checkPotential(this.countryMultipliers, `${band}:${country}`, "country", band, country, alerts);
+      }
+    }
+
+    if (profile.contestId === "CQ-WPX" && exchange.callsign) {
+      const prefix = callsignPrefix(exchange.callsign);
+      this.checkPotential(this.prefixMultipliers, `${band}:${prefix}`, "prefix", band, prefix, alerts);
+    }
+
+    if ((profile.contestId === "ARRL-SS" || profile.contestId === "ARRL-FD") && exchange.section) {
+      this.checkPotential(this.sectionMultipliers, `${band}:${exchange.section}`, "section", band, exchange.section, alerts);
+    }
+
+    return alerts;
+  }
+
   scoreContact(
     profile: ContestProfile,
     exchange: ParsedContestExchange,
     band: string,
     isDupe: boolean,
-  ): ScoreSnapshot {
+  ): ScoreUpdate {
     if (isDupe) {
-      return this.snapshot();
+      return { snapshot: this.snapshot(), newMultipliers: [] };
     }
 
+    const newMultipliers = this.detectNewMultipliers(profile, exchange, band);
     this.qsoCount += 1;
     this.points += basePoints(profile.contestId, exchange);
 
@@ -52,7 +92,7 @@ export class ContestScorer {
       }
     }
 
-    return this.snapshot();
+    return { snapshot: this.snapshot(), newMultipliers };
   }
 
   snapshot(): ScoreSnapshot {
@@ -67,6 +107,24 @@ export class ContestScorer {
       totalScore: this.points * Math.max(1, multiplierCount),
       qsoCount: this.qsoCount,
     };
+  }
+
+  private checkPotential(
+    set: Set<string>,
+    key: string,
+    kind: MultiplierKind,
+    band: string,
+    value: string,
+    out: MultiplierAlert[],
+  ): void {
+    if (!set.has(key)) {
+      out.push({
+        kind,
+        band,
+        value,
+        label: `New ${kind} multiplier on ${band}: ${value}`,
+      });
+    }
   }
 }
 
