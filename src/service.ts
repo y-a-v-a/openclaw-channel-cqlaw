@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import type { OpenClawApi, ServiceDefinition } from "./openclaw-api.js";
 import { resolveConfig, validateConfig, type ChannelConfig, type PartialChannelConfig } from "./config.js";
-import { FldigiPoller, type FldigiPollerCallbacks } from "./fldigi-poller.js";
+import { FldigiPoller, type FldigiPollerCallbacks, type ChannelStatus } from "./fldigi-poller.js";
 import { AdifLogger, frequencyToBand } from "./adif.js";
 import { scoreMessageConfidence } from "./decode-quality.js";
 import { extractQsoFields, lowConfidenceFields, type ExtractedQsoFields } from "./qso-extract.js";
@@ -18,6 +18,7 @@ import { fuzzyMatchCallsign, type Confidence } from "./fuzzy-match.js";
 interface PollerLike {
   start(): Promise<void>;
   stop(): Promise<void>;
+  getDetectedWpm?(): number | undefined;
 }
 
 interface DupeStore {
@@ -41,6 +42,8 @@ export interface ServiceOptions {
   createDupeStore?: (filePath: string) => DupeStore;
   createMemoryStore?: (filePath: string) => MemoryStore;
   extractFields?: (text: string, options?: { peerHint?: string }) => ExtractedQsoFields;
+  onPollerCreated?: (poller: PollerLike) => void;
+  onStatusChange?: (status: ChannelStatus) => void;
 }
 
 const CHANNEL_ID = "morse-radio";
@@ -95,8 +98,10 @@ export function createService(api: OpenClawApi, options: ServiceOptions = {}): S
         },
         onStatusChange: (status) => {
           console.log(`[morse-radio-service] Status: ${status}`);
+          options.onStatusChange?.(status);
         },
       });
+      options.onPollerCreated?.(poller);
 
       await poller.start();
     },

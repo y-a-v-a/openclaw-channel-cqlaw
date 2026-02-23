@@ -94,8 +94,8 @@ src/
   index.ts            — Plugin entry point, registers channel and service
   config.ts           — Channel configuration schema, defaults, validation
   openclaw-api.ts     — OpenClaw Gateway API type definitions
-  outbound.ts         — Outbound message handler (TX stub → future fldigi TX)
-  service.ts          — Background service (test message → future fldigi polling)
+  outbound.ts         — Outbound message handler (wired TX path via Transmitter)
+  service.ts          — Background service (fldigi polling + inbound enrichment)
   xmlrpc.ts           — Zero-dependency XML-RPC client (Node built-in http)
   fldigi-client.ts    — Typed wrapper for fldigi's XML-RPC API
   fldigi-poller.ts    — Polling loop: fldigi → SentenceBuffer → callsign → dispatch

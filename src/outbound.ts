@@ -9,6 +9,7 @@ import type { TxIntent } from "./cw-format.js";
 import { isCallsign } from "./callsign.js";
 
 const VALID_INTENTS: ReadonlySet<TxIntent> = new Set(["cq", "reply", "signoff", "default"]);
+const STOP_TX_COMMAND = "/stop-tx";
 
 function resolveIntent(metadata: Record<string, unknown> | undefined): TxIntent {
   const candidate = metadata?.txIntent;
@@ -39,6 +40,15 @@ export function createSendTextHandler(
   }
 
   return async (message: OutboundMessage): Promise<SendResult> => {
+    if (message.text.trim().toLowerCase() === STOP_TX_COMMAND) {
+      try {
+        await transmitter.emergencyStop();
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: `Failed to stop TX: ${err instanceof Error ? err.message : err}` };
+      }
+    }
+
     const rxWpm = getDetectedWpm?.();
     const intent = resolveIntent(message.metadata);
     const peerCall = resolvePeerCall(message.peer);

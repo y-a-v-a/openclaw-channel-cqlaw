@@ -2,6 +2,18 @@
 
 This document defines every task required to fully implement the OpenClaw QC (CW/Morse) radio channel plugin, from initial project scaffolding through agent intelligence features. Tasks are organized by phase, with implementation details included for each.
 
+## Status Interpretation (Pre-Hardware Phase)
+
+Current project state: SDR/rig hardware integration is intentionally pending until USB dongle delivery (primarily Phase 3 impact).
+
+To avoid ambiguity in checked items:
+- `[x]` means implemented and wired in active runtime path (not only in isolated modules/tests).
+- `[~]` means implemented in code (or tests) but not yet wired end-to-end in runtime.
+- `[ ]` means not implemented yet.
+
+Pre-hardware note:
+- For features that do not require SDR hardware (for example outbound handler wiring, command/control wiring, or in-process TX policy enforcement), keep them `[x]` only when runtime wiring is complete.
+
 ---
 
 ## Phase 1 — Scaffold the OpenClaw Channel Plugin
@@ -78,7 +90,8 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **2.1.1** Add an XML-RPC client library dependency (e.g., `xmlrpc` npm package or implement a minimal client using raw HTTP POST since XML-RPC is simple)
 - [x] **2.1.2** Create an `FldigiClient` class that encapsulates the XML-RPC connection to fldigi
 - [x] **2.1.3** Implement the `connect()` method that validates fldigi is reachable at the configured host:port
-- [x] **2.1.4** Implement `getRxData()` method wrapping fldigi's `main.get_rx_data` (or `text.get_rx` depending on fldigi version — detect which is available)
+- [~] **2.1.4** Implement `getRxData()` method wrapping fldigi's `main.get_rx_data` (or `text.get_rx` depending on fldigi version — detect which is available)
+  - **Status note (2026-02-23):** Runtime currently uses `text.get_rx_length` + `text.get_rx(...)` flow (`getRxLength`/`getRxText`) rather than a dedicated `getRxData()` method. Functionally close, naming/contract mismatch remains.
 - [x] **2.1.5** Implement `getRxText()` as an alternative method for fetching decoded text from the receive buffer
 - [x] **2.1.6** Implement `getVersion()` to query fldigi version and log it on startup for debugging
 - [x] **2.1.7** Implement `getFrequency()` to read the currently tuned frequency from fldigi
@@ -90,7 +103,8 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 ### 2.2 Polling Loop
 
 - [x] **2.2.1** Replace the hardcoded test string dispatch in the background service with a polling loop
-- [x] **2.2.2** The polling loop calls `FldigiClient.getRxData()` at the configured interval (default 250ms)
+- [~] **2.2.2** The polling loop calls `FldigiClient.getRxData()` at the configured interval (default 250ms)
+  - **Status note (2026-02-23):** Polling loop is active at configured interval, but calls `getRxLength`/`getRxText` rather than `getRxData()`.
 - [x] **2.2.3** Track the last-read position in fldigi's receive buffer to avoid re-reading old data
 - [x] **2.2.4** Implement a clean start/stop mechanism for the polling loop tied to the service lifecycle
 - [x] **2.2.5** Add performance logging: log polling latency periodically (e.g., every 60 seconds) to detect bottlenecks
@@ -126,7 +140,8 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **2.5.3** Graceful degradation: if XML-RPC is unavailable, the plugin should remain loaded but inactive, not crash the gateway
 - [x] **2.5.4** Handle fldigi restart mid-session: detect buffer reset (position jump backward) and re-synchronize
 - [x] **2.5.5** Handle XML-RPC timeout: set a per-request timeout (e.g., 5 seconds) and treat timeouts as temporary failures
-- [x] **2.5.6** Emit channel status events to the gateway: `connected`, `disconnected`, `reconnecting`, `error`
+- [~] **2.5.6** Emit channel status events to the gateway: `connected`, `disconnected`, `reconnecting`, `error`
+  - **Status note (2026-02-23):** Status transitions are computed and logged; explicit gateway event emission API wiring is not yet present.
 
 ### 2.6 Development Tooling for Phase 2
 
@@ -219,6 +234,7 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 ### 4.2 Outbound.sendText Implementation
 
 - [x] **4.2.1** Replace the Phase 1 stub `outbound.sendText` with actual fldigi TX integration
+  - **Status note (2026-02-23):** Runtime now wires `outbound.sendText` to a real `Transmitter` instance in plugin registration.
 - [x] **4.2.2** Before transmitting, check that `tx.enabled` is `true` in channel config — refuse to transmit if disabled
 - [x] **4.2.3** Before transmitting, check that `tx.callsign` is configured — refuse to transmit without a callsign
 - [x] **4.2.4** Sanitize agent text for CW transmission: strip characters that can't be sent in Morse, uppercase everything
@@ -247,8 +263,10 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 - [x] **4.5.2** Implement a TX inhibit flag in config (`tx.inhibit: boolean`) that immediately prevents all transmission when set to `true`
 - [ ] **4.5.3** Implement a confirmation prompt before the very first transmission of a session — require explicit operator approval
 - [x] **4.5.4** Implement a `/stop-tx` command (or equivalent OpenClaw Control UI button) that immediately calls `abortTx()` and sets the inhibit flag
+  - **Status note (2026-02-23):** `/stop-tx` is now handled in outbound runtime path and triggers `Transmitter.emergencyStop()`.
 - [x] **4.5.5** Implement a TX cooldown: minimum gap between consecutive transmissions (e.g., 500ms) to prevent keying issues
 - [x] **4.5.6** Log every transmission: timestamp, text content, WPM, duration, frequency — for regulatory compliance and debugging
+  - **Status note (2026-02-23):** Runtime transmit logs now include duration (`durationSeconds`) in addition to timestamp/text/WPM/frequency.
 
 ### 4.6 Legal Identification Timer
 
@@ -261,7 +279,9 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 ### 4.7 Band Manners Enforcement (Hard Constraints)
 
 - [x] **4.7.1** Before first TX on a frequency, automatically send `QRL?` ("is this frequency in use?") and wait for a response period (configurable, default 5 seconds)
+  - **Status note (2026-02-23):** Standard send path now automatically performs `QRL?` check before first TX on frequency.
 - [x] **4.7.2** If a response to `QRL?` is detected (any decoded text during the wait), abort the TX attempt and report to the agent that the frequency is occupied
+  - **Status note (2026-02-23):** Standard send path now aborts TX with an occupied-frequency error when `QRL?` detects activity.
 - [x] **4.7.3** Implement a "listen before transmit" guard: require at least N seconds (configurable, default 10s) of receive monitoring before allowing any TX on a new frequency
 - [x] **4.7.4** Log all band manner checks for debugging
 
@@ -468,7 +488,8 @@ This document defines every task required to fully implement the OpenClaw QC (CW
 
 ### 5f. Error Correction and Context
 
-- [x] **5f.1** Implement fuzzy callsign matching: when fldigi decodes a callsign with uncertain characters (e.g., `PA3X?Z`), query the QRZ database for likely matches
+- [~] **5f.1** Implement fuzzy callsign matching: when fldigi decodes a callsign with uncertain characters (e.g., `PA3X?Z`), query the QRZ database for likely matches
+  - **Status note (2026-02-23):** Fuzzy matching is implemented using local known-callsign memory with Levenshtein; QRZ-backed candidate querying is not yet implemented.
 - [x] **5f.2** Implement Levenshtein distance or similar edit-distance matching for callsign candidates
 - [x] **5f.3** Implement contextual reconstruction for common fields:
   - RST: if decoded as `5?9`, infer `599` (the most common report)

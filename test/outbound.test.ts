@@ -76,4 +76,28 @@ describe("createSendTextHandler", () => {
 
     assert.equal(calls[0].peerCall, undefined);
   });
+
+  it("handles /stop-tx by invoking transmitter emergency stop", async () => {
+    let stopCalls = 0;
+    let sendCalls = 0;
+    const handler = createSendTextHandler({
+      emergencyStop: async () => {
+        stopCalls += 1;
+      },
+      send: async () => {
+        sendCalls += 1;
+        return { success: true };
+      },
+    } as any);
+
+    const result = await handler({
+      text: "/stop-tx",
+      peer: "PA3XYZ",
+      channel: "morse-radio",
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(stopCalls, 1);
+    assert.equal(sendCalls, 0);
+  });
 });

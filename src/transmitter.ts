@@ -41,6 +41,7 @@ export interface TransmitLog {
   timestamp: string;
   text: string;
   wpm: number;
+  durationSeconds: number;
   frequency: number;
   callsign: string;
 }
@@ -139,6 +140,15 @@ export class Transmitter {
     const listenResult = this.checkListenGuard();
     if (listenResult) return listenResult;
 
+    // --- QRL? occupancy check before first TX on this frequency ---
+    if (this.qrlCheckedForFrequency !== this.config.frequency) {
+      console.log("[transmitter] First TX on frequency, performing QRL? check");
+      const clear = await this.checkQrlUnsafe();
+      if (!clear) {
+        return { success: false, error: "Frequency appears occupied (QRL response detected)" };
+      }
+    }
+
     // --- Sanitize ---
     const sanitized = sanitizeForCw(text);
     if (!sanitized) {
@@ -198,6 +208,7 @@ export class Transmitter {
       timestamp: new Date().toISOString(),
       text: finalText,
       wpm: txWpm,
+      durationSeconds: estimateTxDurationSeconds(finalText, txWpm),
       frequency: this.config.frequency,
       callsign: this.config.tx.callsign,
     };
@@ -407,4 +418,14 @@ export class Transmitter {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function estimateTxDurationSeconds(text: string, wpm: number): number {
+  const safeWpm = Math.max(5, wpm);
+  const normalized = text.trim().replace(/\s+/g, " ");
+  if (!normalized) return 0;
+  // Approximation based on standard PARIS WPM convention (~5 chars/word).
+  const charCount = normalized.length;
+  const seconds = (charCount * 60) / (safeWpm * 5);
+  return Math.round(seconds * 100) / 100;
 }

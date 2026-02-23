@@ -91,6 +91,11 @@ export class FldigiPoller {
     return this.client;
   }
 
+  /** Most recent detected RX speed (WPM), if available. */
+  getDetectedWpm(): number | undefined {
+    return this.detectedWpm;
+  }
+
   // --- internals ---
 
   private async tryConnect(): Promise<void> {

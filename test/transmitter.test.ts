@@ -190,6 +190,7 @@ describe("Transmitter", () => {
     assert.ok(result.transmitted?.includes("CQ CQ DE PA3XYZ K"));
     assert.equal(logs.length, 1);
     assert.equal(logs[0].wpm, 20);
+    assert.ok(logs[0].durationSeconds > 0);
     assert.ok(mock.getTxBuffer().length > 0);
     assert.ok(mock.getMethodsCalled().includes("text.add_tx"));
     assert.ok(mock.getMethodsCalled().includes("main.tx"));
@@ -359,5 +360,25 @@ describe("Transmitter", () => {
     assert.equal(successes, 1);
     assert.equal(failures.length, 1);
     assert.ok(failures[0].error?.includes("cooldown"));
+  });
+
+  it("runs QRL check once per frequency before normal TX", async () => {
+    mock = createMockFldigi();
+    const port = await mock.start();
+    const config = resolveConfig({ fldigi: { port }, tx: { enabled: true, callsign: "PA3XYZ", wpm: 20 } });
+    const client = new FldigiClient({ host: "127.0.0.1", port });
+    const { callbacks } = createCallbacks();
+
+    tx = new Transmitter(client, config, callbacks);
+    (tx as any).listenStartTime = Date.now() - 15000;
+
+    const first = await tx.send("FIRST K");
+    await wait(600);
+    const second = await tx.send("SECOND K");
+
+    assert.equal(first.success, true);
+    assert.equal(second.success, true);
+    const qrlCalls = mock.getTxBuffer().filter((text) => text === "QRL?").length;
+    assert.equal(qrlCalls, 1);
   });
 });
