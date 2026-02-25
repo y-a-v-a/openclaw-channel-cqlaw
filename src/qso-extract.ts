@@ -2,9 +2,10 @@
  * Structured extraction from decoded QSO text (rule-based, no external dependencies).
  */
 
-import { extractCallsigns, isCallsign } from "./callsign.js";
+import { extractCallsigns, extractCqCalls, extractDirectedExchanges, isCallsign } from "./callsign.js";
 import { scoreConfidence, type Confidence } from "./fuzzy-match.js";
 import { reconstructRst, reconstructSerial, reconstructZone } from "./context-reconstruct.js";
+import { getContestProfile, parseContestExchange } from "./contest.js";
 
 export interface ExtractedField {
   value: string;
@@ -23,6 +24,11 @@ export interface ExtractedQsoFields {
 export interface QsoExtractOptions {
   peerHint?: string;
   previousSerial?: number;
+}
+
+export interface MultiQsoExtractEntry {
+  segment: string;
+  fields: ExtractedQsoFields;
 }
 
 const RST_PATTERN = /\b([1-5][1-9][1-9])\b/g;
@@ -80,9 +86,86 @@ export function lowConfidenceFields(fields: ExtractedQsoFields): string[] {
   return results;
 }
 
+export function extractContestQsoFields(text: string, contestId: "CQWW" | "CQ-WPX"): ExtractedQsoFields {
+  const profile = getContestProfile(contestId);
+  if (!profile) return {};
+
+  const parsed = parseContestExchange(text, profile);
+  const out: ExtractedQsoFields = {};
+  if (parsed.callsign) out.callsign = { value: parsed.callsign, confidence: scoreConfidence(parsed.callsign) };
+  if (parsed.rst) out.rstRcvd = { value: parsed.rst, confidence: scoreConfidence(parsed.rst) };
+  if (parsed.zone !== undefined) out.zone = { value: String(parsed.zone), confidence: "high" };
+  if (parsed.serial !== undefined) out.serial = { value: String(parsed.serial), confidence: "high" };
+  return out;
+}
+
+export function splitQsoTranscript(transcript: string): string[] {
+  const normalized = transcript.toUpperCase().replace(/\s+/g, " ").trim();
+  if (!normalized) return [];
+
+  const segments: string[] = [];
+  const tokens = normalized.split(" ");
+  let current: string[] = [];
+
+  for (const token of tokens) {
+    current.push(token);
+    if (token === "SK" || token === "AR") {
+      const segment = current.join(" ").trim();
+      if (segment) segments.push(segment);
+      current = [];
+    }
+  }
+
+  if (current.length > 0) {
+    const tail = current.join(" ").trim();
+    if (tail) segments.push(tail);
+  }
+
+  return segments;
+}
+
+export function extractMultipleQsoFields(
+  transcript: string,
+  options: { contestId?: "CQWW" | "CQ-WPX"; peerHint?: string; previousSerial?: number } = {},
+): MultiQsoExtractEntry[] {
+  const segments = splitQsoTranscript(transcript);
+  let previousSerial = options.previousSerial;
+
+  return segments.map((segment) => {
+    const fields = options.contestId
+      ? extractContestQsoFields(segment, options.contestId)
+      : extractQsoFields(segment, { peerHint: options.peerHint, previousSerial });
+    if (fields.serial?.value) {
+      const parsed = Number.parseInt(fields.serial.value, 10);
+      if (Number.isFinite(parsed)) previousSerial = parsed;
+    }
+    return { segment, fields };
+  });
+}
+
 function extractCallsign(text: string, peerHint?: string): string | undefined {
-  if (peerHint && isCallsign(peerHint)) {
-    return peerHint.toUpperCase();
+  const normalizedHint = peerHint && isCallsign(peerHint) ? peerHint.toUpperCase() : undefined;
+
+  // Directed exchange: "<to> DE <from>".
+  // For logging, prefer the counterparty callsign.
+  const directed = extractDirectedExchanges(text);
+  if (directed.length > 0) {
+    const last = directed[directed.length - 1];
+    if (normalizedHint) {
+      if (last.to === normalizedHint) return last.from;
+      if (last.from === normalizedHint) return last.to;
+    }
+    return last.to;
+  }
+
+  // CQ pattern: "CQ ... DE <call>".
+  const cqCalls = extractCqCalls(text);
+  if (cqCalls.length > 0) {
+    return cqCalls[cqCalls.length - 1].from;
+  }
+
+  if (normalizedHint) {
+    return normalizedHint;
   }
 
   const calls = extractCallsigns(text);

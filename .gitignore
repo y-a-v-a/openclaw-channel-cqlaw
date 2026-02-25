@@ -4,6 +4,7 @@ dist/
 .env
 .DS_Store
 .claude/
+.artifacts/
 
 # Generated WAV test fixtures (regenerate via: npm run generate-fixtures)
 test/fixtures/wav/

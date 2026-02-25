@@ -12,6 +12,7 @@
     "pretest": "tsc",
     "test:fast": "npm run pretest && node scripts/test-tier.mjs fast",
     "test:medium": "npm run pretest && node scripts/test-tier.mjs medium",
+    "test:slow": "bash scripts/test-slow.sh",
     "smoke": "bash scripts/smoke-verify.sh",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",

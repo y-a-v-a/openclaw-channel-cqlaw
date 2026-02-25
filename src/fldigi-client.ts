@@ -110,6 +110,15 @@ export class FldigiClient {
   }
 
   /** Read current TX buffer contents. */
+  async getTxData(): Promise<string> {
+    try {
+      return await this.rpc.call("main.get_tx_data");
+    } catch {
+      return this.rpc.call("text.get_tx");
+    }
+  }
+
+  /** Read current TX buffer length. */
   async getTxLength(): Promise<number> {
     const val = await this.rpc.call("text.get_tx_length");
     return parseInt(val, 10);

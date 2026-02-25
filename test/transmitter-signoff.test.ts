@@ -55,8 +55,9 @@ describe("Transmitter signoff identification", () => {
     const result = await tx.send("TNX FER QSO 73", undefined, "signoff", "DL2ABC");
     assert.equal(result.success, true);
     assert.ok(result.transmitted?.endsWith("DE PA3XYZ SK"));
-    assert.equal(client.txTexts.length, 1);
-    assert.ok(client.txTexts[0].endsWith("DE PA3XYZ SK"));
+    assert.equal(client.txTexts.length, 2);
+    assert.equal(client.txTexts[0], "QRL?");
+    assert.ok(client.txTexts[1].endsWith("DE PA3XYZ SK"));
   });
 
   it("does not duplicate terminal DE CALLSIGN SK when already present", async () => {

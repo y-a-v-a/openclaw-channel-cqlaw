@@ -28,6 +28,7 @@ const tiers = {
     "dist/test/fldigi-poller.test.js",
     "dist/test/transmitter.test.js",
     "dist/test/transmitter-signoff.test.js",
+    "dist/test/transmit-path.test.js",
   ],
 };
 

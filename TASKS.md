@@ -597,10 +597,10 @@ Pre-hardware note:
 
 - [x] **6.3.1** Test clean QSO transcript: extract callsign, RST, name, QTH from a perfectly decoded exchange
 - [x] **6.3.2** Test noisy QSO transcript: extract fields from a transcript with `?` characters and garbled text
-- [ ] **6.3.3** Test partial QSO: extract whatever fields are available from an interrupted/incomplete exchange
-- [ ] **6.3.4** Test contest exchange extraction: extract RST + zone from a CQ WW exchange
-- [ ] **6.3.5** Test contest exchange extraction: extract RST + serial number from a CQ WPX exchange
-- [ ] **6.3.6** Test multiple QSOs in sequence: correctly separate and extract fields from back-to-back contacts
+- [x] **6.3.3** Test partial QSO: extract whatever fields are available from an interrupted/incomplete exchange
+- [x] **6.3.4** Test contest exchange extraction: extract RST + zone from a CQ WW exchange
+- [x] **6.3.5** Test contest exchange extraction: extract RST + serial number from a CQ WPX exchange
+- [x] **6.3.6** Test multiple QSOs in sequence: correctly separate and extract fields from back-to-back contacts
 
 ### 6.4 Unit Tests — ADIF Writer
 
@@ -637,16 +637,26 @@ Pre-hardware note:
 
 ### 6.8 Integration Tests — Fldigi Decode Chain
 
-- [ ] **6.8.1** Create a Docker-based test environment:
+- [x] **6.8.1** Create a Docker-based test environment:
   - `Dockerfile` with fldigi installed, PulseAudio configured for null sink/source
-  - `docker-compose.test.yml` orchestrating fldigi + test runner
-- [ ] **6.8.2** Test `clean-cq.wav` → fldigi → XML-RPC → assert decoded text matches `"CQ CQ DE PA3XYZ K"`
-- [ ] **6.8.3** Test `clean-qso.wav` → assert complete QSO transcript decoded correctly
-- [ ] **6.8.4** Test `noisy-weak.wav` → assert partial decode with gaps, `?` handling
-- [ ] **6.8.5** Test `qrm-two-stations.wav` → assert primary station decoded, interference filtered by fldigi
-- [ ] **6.8.6** Test `qsb-fading.wav` → assert decode with gaps during fades, buffer resilience
-- [ ] **6.8.7** Test `fast-contest.wav` → assert 30 WPM contest exchange decoded correctly
-- [ ] **6.8.8** Test `slow-beginner.wav` → assert 10 WPM text decoded with long gap handling
+  - `docker-compose.test.yml` orchestrating a single slow-test container (fldigi + PulseAudio + Node runner)
+  - **Status note (2026-02-25):** Implemented as a merged container topology to keep WAV playback and fldigi decode on the same local audio path.
+  - **Status note (2026-02-25):** XML-RPC is now started with explicit flags (`--xmlrpc-server-address/--xmlrpc-server-port`), but current container runs still block before RPC readiness because fldigi audio backend initialization fails (no usable ALSA/JACK device in container).
+- [~] **6.8.2** Test `clean-cq.wav` → fldigi → XML-RPC → assert decoded text matches `"CQ CQ DE PA3XYZ K"`
+  - **Status note (2026-02-25):** Implemented as skip-gated live decode-chain test (`CQLAW_RUN_FLDIGI_DECODE_CHAIN=1`) with runtime preflight for `paplay`/`pactl` + `virtual_cw` sink visibility.
+  - **Status note (2026-02-25):** Slow-tier bypass added: writes a machine-readable preflight (`.artifacts/slow-preflight.json`) and explicitly skips live decode assertions in `degraded` mode.
+- [~] **6.8.3** Test `clean-qso.wav` → assert complete QSO transcript decoded correctly
+  - **Status note (2026-02-25):** Implemented as skip-gated live decode-chain test (mapped to existing `clean-qso-exchange.wav` fixture).
+- [~] **6.8.4** Test `noisy-weak.wav` → assert partial decode with gaps, `?` handling
+  - **Status note (2026-02-25):** Implemented as skip-gated live decode-chain test with partial/uncertainty assertions.
+- [~] **6.8.5** Test `qrm-two-stations.wav` → assert primary station decoded, interference filtered by fldigi
+  - **Status note (2026-02-25):** Test scaffold added and skip-safe if fixture is absent (depends on 6.1.4 completion).
+- [~] **6.8.6** Test `qsb-fading.wav` → assert decode with gaps during fades, buffer resilience
+  - **Status note (2026-02-25):** Test scaffold added and skip-safe if fixture is absent (depends on 6.1.5 completion).
+- [~] **6.8.7** Test `fast-contest.wav` → assert 30 WPM contest exchange decoded correctly
+  - **Status note (2026-02-25):** Implemented as skip-gated live decode-chain test.
+- [~] **6.8.8** Test `slow-beginner.wav` → assert 10 WPM text decoded with long gap handling
+  - **Status note (2026-02-25):** Implemented as skip-gated live decode-chain test.
 
 ### 6.9 End-to-End Tests
 
@@ -659,11 +669,11 @@ Pre-hardware note:
 
 ### 6.10 Transmit Path Tests
 
-- [ ] **6.10.1** Feed text into `outbound.sendText`, capture what fldigi receives via `main.get_tx_data` XML-RPC
-- [ ] **6.10.2** Assert the transmitted text is correctly formatted for CW
-- [ ] **6.10.3** Assert speed matching: TX WPM matches or is below detected RX WPM
-- [ ] **6.10.4** Assert safety guards: max duration, inhibit flag, callsign identification timer
-- [ ] **6.10.5** Assert no actual RF transmission in test environment (fldigi TX buffer only, no PTT)
+- [x] **6.10.1** Feed text into `outbound.sendText`, capture what fldigi receives via `main.get_tx_data` XML-RPC
+- [x] **6.10.2** Assert the transmitted text is correctly formatted for CW
+- [x] **6.10.3** Assert speed matching: TX WPM matches or is below detected RX WPM
+- [x] **6.10.4** Assert safety guards: max duration, inhibit flag, callsign identification timer
+- [x] **6.10.5** Assert no actual RF transmission in test environment (fldigi TX buffer only, no PTT)
 
 ### 6.11 CI Pipeline Configuration
 
@@ -673,10 +683,11 @@ Pre-hardware note:
 - [x] **6.11.2** Configure the **medium** tier (every PR):
   - Plugin integration tests with mocked XML-RPC
   - No fldigi needed, runs in seconds
-- [ ] **6.11.3** Configure the **slow** tier (nightly / pre-release):
+- [~] **6.11.3** Configure the **slow** tier (nightly / pre-release):
   - Full fldigi integration tests in Docker
   - End-to-end tests with gateway
   - Requires Docker, runs in minutes
+  - **Status note (2026-02-25):** Docker slow-tier script and compose stack added for decode-chain tests; full gateway E2E still pending.
 
 ---
 

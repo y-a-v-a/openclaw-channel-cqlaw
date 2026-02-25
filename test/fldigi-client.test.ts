@@ -130,6 +130,42 @@ describe("FldigiClient", () => {
     assert.equal(wpm, 20);
   });
 
+  it("getTxData uses main.get_tx_data when available", async () => {
+    mock.setHandler((body) => {
+      if (body.includes("<methodName>main.get_tx_data</methodName>")) {
+        return wrapResponse("CQ CQ DE PA3XYZ K");
+      }
+      return wrapResponse("");
+    });
+    port = await mock.start();
+    const client = new FldigiClient({ host: "127.0.0.1", port });
+
+    const txData = await client.getTxData();
+    assert.equal(txData, "CQ CQ DE PA3XYZ K");
+  });
+
+  it("getTxData falls back to text.get_tx when main.get_tx_data faults", async () => {
+    mock.setHandler((body) => {
+      if (body.includes("<methodName>main.get_tx_data</methodName>")) {
+        return (
+          `<?xml version="1.0"?><methodResponse><fault><value><struct>` +
+          `<member><name>faultCode</name><value><int>-1</int></value></member>` +
+          `<member><name>faultString</name><value><string>No such method</string></value></member>` +
+          `</struct></value></fault></methodResponse>`
+        );
+      }
+      if (body.includes("<methodName>text.get_tx</methodName>")) {
+        return wrapResponse("TNX 73");
+      }
+      return wrapResponse("");
+    });
+    port = await mock.start();
+    const client = new FldigiClient({ host: "127.0.0.1", port });
+
+    const txData = await client.getTxData();
+    assert.equal(txData, "TNX 73");
+  });
+
   it("propagates XML-RPC faults as XmlRpcError", async () => {
     mock.setHandler(
       () =>

@@ -1,0 +1,14 @@
+services:
+  slow-test:
+    build:
+      context: .
+      dockerfile: docker/fldigi-test/Dockerfile
+    container_name: cqlaw-slow-test
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    environment:
+      FLDIGI_HOST: 127.0.0.1
+      FLDIGI_PORT: 7362
+      CQLAW_RUN_FLDIGI_DECODE_CHAIN: "1"
+      CQLAW_SLOW_PREFLIGHT_FILE: /workspace/.artifacts/slow-preflight.json

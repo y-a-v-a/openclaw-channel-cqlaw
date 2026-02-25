@@ -77,7 +77,18 @@ npm run build
 
 # Run tests
 npm test
+
+# Run fast tier
+npm run test:fast
+
+# Run medium tier
+npm run test:medium
+
+# Run slow Docker-based decode-chain tier
+npm run test:slow
 ```
+
+The slow tier uses a single Docker container that runs fldigi, PulseAudio virtual sink routing, and the Node test runner together.
 
 For testing with fldigi and virtual audio (no radio hardware needed), see the full **[Development Guide](docs/development.md)** — covers fldigi installation, virtual audio setup, and the WAV-to-decode pipeline.
 

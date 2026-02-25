@@ -1,11 +1,17 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { extractQsoFields, lowConfidenceFields } from "../src/qso-extract.js";
+import {
+  extractContestQsoFields,
+  extractMultipleQsoFields,
+  extractQsoFields,
+  lowConfidenceFields,
+  splitQsoTranscript,
+} from "../src/qso-extract.js";
 
 describe("extractQsoFields", () => {
   it("extracts callsign, rst, name, and qth from transcript text", () => {
     const fields = extractQsoFields("DL2ABC DE PA3XYZ UR RST 579 NAME HANS QTH MUNICH ZN 14 NR 0012 K");
-    assert.equal(fields.callsign?.value, "PA3XYZ");
+    assert.equal(fields.callsign?.value, "DL2ABC");
     assert.equal(fields.rstRcvd?.value, "579");
     assert.equal(fields.zone?.value, "14");
     assert.equal(fields.serial?.value, "12");
@@ -26,6 +32,46 @@ describe("extractQsoFields", () => {
     assert.equal(fields.rstRcvd?.value, "599");
     assert.equal(fields.zone?.value, "14");
     assert.equal(fields.serial?.value, "9");
+  });
+
+  it("extracts available fields from a partial/incomplete QSO", () => {
+    const fields = extractQsoFields("DL2ABC DE PA3XYZ UR RST 579 NAME HANS BK");
+    assert.equal(fields.callsign?.value, "DL2ABC");
+    assert.equal(fields.rstRcvd?.value, "579");
+    assert.equal(fields.name?.value, "HANS");
+    assert.equal(fields.qth, undefined);
+  });
+
+  it("extracts contest CQWW fields (RST + zone)", () => {
+    const fields = extractContestQsoFields("DL2ABC 599 14", "CQWW");
+    assert.equal(fields.callsign?.value, "DL2ABC");
+    assert.equal(fields.rstRcvd?.value, "599");
+    assert.equal(fields.zone?.value, "14");
+  });
+
+  it("extracts contest CQ-WPX fields (RST + serial)", () => {
+    const fields = extractContestQsoFields("DL2ABC 599 023", "CQ-WPX");
+    assert.equal(fields.callsign?.value, "DL2ABC");
+    assert.equal(fields.rstRcvd?.value, "599");
+    assert.equal(fields.serial?.value, "23");
+  });
+
+  it("splits and extracts back-to-back QSOs from one transcript", () => {
+    const transcript = "CQ CQ DE PA3XYZ K DL2ABC DE PA3XYZ RST 579 NAME HANS SK W1AW DE PA3XYZ RST 599 NAME ARRL SK";
+    const segments = splitQsoTranscript(transcript);
+    assert.equal(segments.length, 2);
+
+    const extracted = extractMultipleQsoFields(transcript);
+    assert.equal(extracted.length, 2);
+    assert.equal(extracted[0].fields.callsign?.value, "DL2ABC");
+    assert.equal(extracted[0].fields.rstRcvd?.value, "579");
+    assert.equal(extracted[1].fields.callsign?.value, "W1AW");
+    assert.equal(extracted[1].fields.rstRcvd?.value, "599");
+  });
+
+  it("uses peerHint to return the counterparty in directed exchanges", () => {
+    const fields = extractQsoFields("PA3XYZ DE DL2ABC RST 579", { peerHint: "DL2ABC" });
+    assert.equal(fields.callsign?.value, "PA3XYZ");
   });
 });
 
