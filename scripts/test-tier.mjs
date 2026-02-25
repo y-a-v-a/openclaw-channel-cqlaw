@@ -7,6 +7,7 @@ const tiers = {
     "dist/test/adif.test.js",
     "dist/test/adif-rotation.test.js",
     "dist/test/callsign.test.js",
+    "dist/test/callsign-lookup.test.js",
     "dist/test/config.test.js",
     "dist/test/contest.test.js",
     "dist/test/contest-scoring.test.js",

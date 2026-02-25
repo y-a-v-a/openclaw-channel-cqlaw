@@ -14,6 +14,8 @@ describe("resolveConfig", () => {
     assert.equal(config.sdr.enabled, false);
     assert.equal(config.tx.enabled, false);
     assert.equal(config.tx.wpm, 20);
+    assert.equal(config.callsignLookup.enabled, true);
+    assert.equal(config.callsignLookup.provider, "mock");
   });
 
   it("overrides specific fields while keeping defaults for the rest", () => {
@@ -32,11 +34,15 @@ describe("resolveConfig", () => {
       CQLAW_TX_CALLSIGN: " pa3xyz ",
       CQLAW_QRZ_USERNAME: "demo-user",
       CQLAW_QRZ_PASSWORD: "secret-pass",
+      CQLAW_CALLSIGN_LOOKUP_PROVIDER: "auto",
+      CQLAW_CALLSIGN_LOOKUP_CACHE_TTL_SECONDS: "600",
     } as NodeJS.ProcessEnv);
 
     assert.equal(config.tx.callsign, "PA3XYZ");
     assert.equal(config.qrz.username, "demo-user");
     assert.equal(config.qrz.password, "secret-pass");
+    assert.equal(config.callsignLookup.provider, "auto");
+    assert.equal(config.callsignLookup.cacheTtlSeconds, 600);
   });
 });
 
@@ -119,5 +125,11 @@ describe("validateConfig", () => {
     const config = { ...validConfig(), qrz: { username: "", password: "secret" } };
     const errors = validateConfig(config);
     assert.ok(errors.some(e => e.field === "qrz.username"));
+  });
+
+  it("rejects invalid callsign lookup cache TTL", () => {
+    const config = { ...validConfig(), callsignLookup: { ...validConfig().callsignLookup, cacheTtlSeconds: 0 } };
+    const errors = validateConfig(config);
+    assert.ok(errors.some(e => e.field === "callsignLookup.cacheTtlSeconds"));
   });
 });

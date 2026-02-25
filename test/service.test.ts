@@ -16,6 +16,10 @@ function createMockApi(): OpenClawApi & { dispatched: InboundMessage[] } {
   };
 }
 
+function flushAsync(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe("createService", () => {
   it("dispatches inbound text from the poller callback", async () => {
     const api = createMockApi();
@@ -53,6 +57,7 @@ describe("createService", () => {
       detectedWpm: 20,
       snr: 18.5,
     });
+    await flushAsync();
 
     assert.equal(api.dispatched.length, 1);
     assert.equal(api.dispatched[0].text, "CQ CQ DE PI4ABC");
@@ -137,6 +142,7 @@ describe("createService", () => {
       timestamp: "2026-02-13T00:00:00.000Z",
       frequency: 7030000,
     });
+    await flushAsync();
 
     assert.equal(api.dispatched.length, 1);
     assert.ok(api.dispatched[0].text.startsWith("[DUPE] [LOW-CONFIDENCE]"));
@@ -175,9 +181,54 @@ describe("createService", () => {
 
     await service.start();
     callbackHolder.callbacks?.onMessage("PI4AB? DE TEST", "UNKNOWN", { timestamp: "2026-02-13T00:00:00.000Z" });
+    await flushAsync();
 
     assert.equal(api.dispatched.length, 1);
     assert.equal(api.dispatched[0].peer, "PI4ABC");
     assert.equal((api.dispatched[0].metadata?.qsoFields as Record<string, unknown>).callsign !== undefined, true);
+  });
+
+  it("enriches metadata with callsign lookup profile via injected provider", async () => {
+    const api = createMockApi();
+    const callbackHolder: { callbacks?: FldigiPollerCallbacks } = {};
+
+    const service = createService(api, {
+      createPoller: (_config: ChannelConfig, cb: FldigiPollerCallbacks) => {
+        callbackHolder.callbacks = cb;
+        return { async start() {}, async stop() {} };
+      },
+      createDupeStore: () => ({
+        initialize: () => {},
+        loadExisting: () => {},
+        isDupe: () => false,
+      }),
+      createMemoryStore: () => ({
+        initialize: () => {},
+        addRecord: () => {},
+        getByCallsign: () => [],
+        getKnownCallsigns: () => [],
+      }),
+      extractFields: (): ExtractedQsoFields => ({
+        callsign: { value: "PI4ABC", confidence: "high" },
+      }),
+      callsignLookup: {
+        lookup: async () => ({
+          callsign: "PI4ABC",
+          source: "mock",
+          fullName: "Hans Vermeer",
+          qth: "Rotterdam",
+          country: "Netherlands",
+        }),
+      },
+    });
+
+    await service.start();
+    callbackHolder.callbacks?.onMessage("PI4ABC DE TEST", "PI4ABC", { timestamp: "2026-02-13T00:00:00.000Z" });
+    await flushAsync();
+
+    assert.equal(api.dispatched.length, 1);
+    const profile = (api.dispatched[0].metadata?.callsignProfile as Record<string, unknown>);
+    assert.equal(profile.source, "mock");
+    assert.equal(profile.fullName, "Hans Vermeer");
   });
 });

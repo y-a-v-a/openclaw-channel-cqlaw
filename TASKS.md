@@ -392,15 +392,17 @@ Pre-hardware note:
   - Log4OM import
   - LOTW (Logbook of The World) ADIF upload
 
-### 5c. QRZ.com Callsign Lookup
+### 5c. Callsign Lookup (Provider-Agnostic, QRZ Compatible)
 
-- [ ] **5c.1** Register a new OpenClaw tool plugin for QRZ.com callsign lookup
-- [ ] **5c.2** Implement the QRZ XML API client:
+- [~] **5c.1** Register a new OpenClaw tool plugin for QRZ.com callsign lookup
+  - **Status note (2026-02-25):** Provider-agnostic lookup module is in place and wired into channel runtime; explicit OpenClaw tool registration API integration is still pending.
+- [~] **5c.2** Implement the QRZ XML API client:
   - Authentication: session key based, requires QRZ.com account credentials
   - Endpoint: `https://xmldata.qrz.com/xml/current/`
   - Login call to obtain session key
   - Lookup call with callsign parameter
-- [ ] **5c.3** Add QRZ.com credentials to channel config:
+  - **Status note (2026-02-25):** QRZ provider interface placeholder exists; full XML API transport/session implementation still pending.
+- [x] **5c.3** Add QRZ.com credentials to channel config:
   - `qrz.username` (string)
   - `qrz.password` (string, should support environment variable reference for security)
 - [ ] **5c.4** Parse the QRZ XML response and extract:
@@ -413,10 +415,14 @@ Pre-hardware note:
   - QSL info (bureau, direct, LOTW)
   - Image URL
 - [ ] **5c.5** Implement session key caching: reuse the session key until it expires, then re-authenticate
-- [ ] **5c.6** Implement callsign lookup caching: cache results for N hours (configurable, default 24h) to avoid redundant API calls
-- [ ] **5c.7** Trigger automatic lookup when a new callsign is detected in the decoded stream
-- [ ] **5c.8** Enrich the agent's context with the lookup data so it knows who it's talking to before the QSO even starts
-- [ ] **5c.9** Handle lookup failures gracefully: if QRZ is unreachable or the callsign is not found, log a warning and continue without enrichment
+- [x] **5c.6** Implement callsign lookup caching: cache results for N hours (configurable, default 24h) to avoid redundant API calls
+  - **Status note (2026-02-25):** Caching is implemented in provider-agnostic lookup service (`callsignLookup.cacheTtlSeconds`).
+- [x] **5c.7** Trigger automatic lookup when a new callsign is detected in the decoded stream
+  - **Status note (2026-02-25):** Runtime now performs lookup during inbound enrichment when callsign is detected.
+- [x] **5c.8** Enrich the agent's context with the lookup data so it knows who it's talking to before the QSO even starts
+  - **Status note (2026-02-25):** Lookup profile is attached to inbound metadata (`callsignProfile`) for agent context.
+- [x] **5c.9** Handle lookup failures gracefully: if QRZ is unreachable or the callsign is not found, log a warning and continue without enrichment
+  - **Status note (2026-02-25):** Provider failures are caught/logged and message flow continues without profile data.
 - [ ] **5c.10** Respect QRZ.com API rate limits (currently ~100 lookups per 24h for free accounts, unlimited for subscribers)
 
 ### 5d. Propagation Awareness

@@ -31,6 +31,12 @@ export interface QrzConfig {
   password: string;
 }
 
+export interface CallsignLookupConfig {
+  enabled: boolean;
+  provider: "mock" | "qrz" | "hamdb" | "callook" | "hamqth" | "auto";
+  cacheTtlSeconds: number;
+}
+
 export interface ChannelConfig {
   frequency: number;
   mode: string;
@@ -38,6 +44,7 @@ export interface ChannelConfig {
   sdr: SdrConfig;
   tx: TxConfig;
   qrz: QrzConfig;
+  callsignLookup: CallsignLookupConfig;
 }
 
 const FLDIGI_DEFAULTS: FldigiConfig = {
@@ -66,6 +73,12 @@ const QRZ_DEFAULTS: QrzConfig = {
   password: "",
 };
 
+const CALLSIGN_LOOKUP_DEFAULTS: CallsignLookupConfig = {
+  enabled: true,
+  provider: "mock",
+  cacheTtlSeconds: 24 * 60 * 60,
+};
+
 const CONFIG_DEFAULTS: ChannelConfig = {
   frequency: 7030000,
   mode: "CW",
@@ -73,6 +86,7 @@ const CONFIG_DEFAULTS: ChannelConfig = {
   sdr: SDR_DEFAULTS,
   tx: TX_DEFAULTS,
   qrz: QRZ_DEFAULTS,
+  callsignLookup: CALLSIGN_LOOKUP_DEFAULTS,
 };
 
 export interface ConfigValidationError {
@@ -128,6 +142,10 @@ export function validateConfig(config: ChannelConfig): ConfigValidationError[] {
     errors.push({ field: "tx.maxDurationSeconds", message: "Max TX duration must be at least 1 second" });
   }
 
+  if (!Number.isFinite(config.callsignLookup.cacheTtlSeconds) || config.callsignLookup.cacheTtlSeconds < 1) {
+    errors.push({ field: "callsignLookup.cacheTtlSeconds", message: "Callsign lookup cache TTL must be at least 1 second" });
+  }
+
   return errors;
 }
 
@@ -141,6 +159,7 @@ export interface PartialChannelConfig {
   sdr?: Partial<SdrConfig>;
   tx?: Partial<TxConfig>;
   qrz?: Partial<QrzConfig>;
+  callsignLookup?: Partial<CallsignLookupConfig>;
 }
 
 export function resolveConfig(partial: PartialChannelConfig, env: NodeJS.ProcessEnv = process.env): ChannelConfig {
@@ -159,6 +178,7 @@ export function resolveConfig(partial: PartialChannelConfig, env: NodeJS.Process
       username: (partial.qrz?.username ?? envConfig.qrz?.username ?? QRZ_DEFAULTS.username).trim(),
       password: (partial.qrz?.password ?? envConfig.qrz?.password ?? QRZ_DEFAULTS.password).trim(),
     },
+    callsignLookup: { ...CALLSIGN_LOOKUP_DEFAULTS, ...envConfig.callsignLookup, ...partial.callsignLookup },
   };
 }
 
@@ -185,6 +205,11 @@ function resolveEnvConfig(env: NodeJS.ProcessEnv): PartialChannelConfig {
     username: envString(env, "CQLAW_QRZ_USERNAME"),
     password: envString(env, "CQLAW_QRZ_PASSWORD"),
   });
+  const callsignLookup = definedValues<Partial<CallsignLookupConfig>>({
+    enabled: envBoolean(env, "CQLAW_CALLSIGN_LOOKUP_ENABLED"),
+    provider: envLookupProvider(env, "CQLAW_CALLSIGN_LOOKUP_PROVIDER"),
+    cacheTtlSeconds: envInt(env, "CQLAW_CALLSIGN_LOOKUP_CACHE_TTL_SECONDS"),
+  });
 
   return {
     frequency: envNumber(env, "CQLAW_FREQUENCY"),
@@ -193,6 +218,7 @@ function resolveEnvConfig(env: NodeJS.ProcessEnv): PartialChannelConfig {
     sdr: Object.keys(sdr).length > 0 ? sdr : undefined,
     tx: Object.keys(tx).length > 0 ? tx : undefined,
     qrz: Object.keys(qrz).length > 0 ? qrz : undefined,
+    callsignLookup: Object.keys(callsignLookup).length > 0 ? callsignLookup : undefined,
   };
 }
 
@@ -230,6 +256,23 @@ function envPttMethod(env: NodeJS.ProcessEnv, key: string): TxConfig["pttMethod"
   if (!value) return undefined;
   const normalized = value.toLowerCase();
   if (normalized === "cat" || normalized === "vox" || normalized === "serial" || normalized === "none") {
+    return normalized;
+  }
+  return undefined;
+}
+
+function envLookupProvider(env: NodeJS.ProcessEnv, key: string): CallsignLookupConfig["provider"] | undefined {
+  const value = envString(env, key);
+  if (!value) return undefined;
+  const normalized = value.toLowerCase();
+  if (
+    normalized === "mock" ||
+    normalized === "qrz" ||
+    normalized === "hamdb" ||
+    normalized === "callook" ||
+    normalized === "hamqth" ||
+    normalized === "auto"
+  ) {
     return normalized;
   }
   return undefined;

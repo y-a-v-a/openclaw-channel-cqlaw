@@ -14,6 +14,7 @@ import { extractQsoFields, lowConfidenceFields, type ExtractedQsoFields } from "
 import { QsoMemoryStore, type QsoMemoryRecord } from "./qso-memory.js";
 import { isCallsign } from "./callsign.js";
 import { fuzzyMatchCallsign, type Confidence } from "./fuzzy-match.js";
+import { createCallsignLookupService, type CallsignProfile } from "./callsign-lookup.js";
 
 interface PollerLike {
   start(): Promise<void>;
@@ -34,6 +35,10 @@ interface MemoryStore {
   getKnownCallsigns(): string[];
 }
 
+interface CallsignLookup {
+  lookup(callsign: string): Promise<CallsignProfile | null>;
+}
+
 export interface ServiceOptions {
   config?: PartialChannelConfig;
   createPoller?: (config: ChannelConfig, callbacks: FldigiPollerCallbacks) => PollerLike;
@@ -44,6 +49,7 @@ export interface ServiceOptions {
   extractFields?: (text: string, options?: { peerHint?: string }) => ExtractedQsoFields;
   onPollerCreated?: (poller: PollerLike) => void;
   onStatusChange?: (status: ChannelStatus) => void;
+  callsignLookup?: CallsignLookup;
 }
 
 const CHANNEL_ID = "morse-radio";
@@ -58,6 +64,7 @@ export function createService(api: OpenClawApi, options: ServiceOptions = {}): S
   const createDupeStore = options.createDupeStore ?? ((filePath) => new AdifLogger(filePath));
   const createMemoryStore = options.createMemoryStore ?? ((filePath) => new QsoMemoryStore(filePath));
   const extractFields = options.extractFields ?? extractQsoFields;
+  const callsignLookup = options.callsignLookup ?? createCallsignLookupService(config);
 
   const dupeStore = createDupeStore(adifPath);
   const memoryStore = createMemoryStore(memoryPath);
@@ -88,13 +95,7 @@ export function createService(api: OpenClawApi, options: ServiceOptions = {}): S
 
       poller = createPoller(config, {
         onMessage: (text, peer, metadata) => {
-          const enriched = enrichInbound(text, peer, metadata, config, dupeStore, memoryStore, extractFields);
-          api.dispatchInbound({
-            text: enriched.text,
-            peer: enriched.peer,
-            channel: CHANNEL_ID,
-            metadata: enriched.metadata,
-          });
+          void dispatchEnrichedInbound(api, text, peer, metadata, config, dupeStore, memoryStore, extractFields, callsignLookup);
         },
         onStatusChange: (status) => {
           console.log(`[morse-radio-service] Status: ${status}`);
@@ -119,13 +120,8 @@ export function createService(api: OpenClawApi, options: ServiceOptions = {}): S
   };
 }
 
-interface EnrichedInbound {
-  text: string;
-  peer: string;
-  metadata: Record<string, unknown>;
-}
-
-function enrichInbound(
+async function dispatchEnrichedInbound(
+  api: OpenClawApi,
   text: string,
   peer: string,
   metadata: Record<string, unknown>,
@@ -133,7 +129,33 @@ function enrichInbound(
   dupeStore: DupeStore,
   memoryStore: MemoryStore,
   extractFields: (text: string, options?: { peerHint?: string }) => ExtractedQsoFields,
-): EnrichedInbound {
+  callsignLookup: CallsignLookup,
+): Promise<void> {
+  const enriched = await enrichInbound(text, peer, metadata, config, dupeStore, memoryStore, extractFields, callsignLookup);
+  api.dispatchInbound({
+    text: enriched.text,
+    peer: enriched.peer,
+    channel: CHANNEL_ID,
+    metadata: enriched.metadata,
+  });
+}
+
+interface EnrichedInbound {
+  text: string;
+  peer: string;
+  metadata: Record<string, unknown>;
+}
+
+async function enrichInbound(
+  text: string,
+  peer: string,
+  metadata: Record<string, unknown>,
+  config: ChannelConfig,
+  dupeStore: DupeStore,
+  memoryStore: MemoryStore,
+  extractFields: (text: string, options?: { peerHint?: string }) => ExtractedQsoFields,
+  callsignLookup: CallsignLookup,
+): Promise<EnrichedInbound> {
   const messageConfidence = scoreMessageConfidence(text);
   const fields = extractFields(text, { peerHint: isCallsign(peer) ? peer : undefined });
   const knownCallsigns = memoryStore.getKnownCallsigns();
@@ -150,6 +172,7 @@ function enrichInbound(
   const callsign = fields.callsign?.value ?? (isCallsign(peer) ? peer.toUpperCase() : undefined);
   const band = frequencyToBand(config.frequency) ?? "unknown";
   const previousContacts = callsign ? memoryStore.getByCallsign(callsign) : [];
+  const callsignProfile = callsign ? await callsignLookup.lookup(callsign) : null;
   const previousQsoContext = previousContacts.length > 0
     ? summarizePreviousQso(previousContacts[0])
     : undefined;
@@ -193,6 +216,7 @@ function enrichInbound(
       dupe: isDupeCall,
       previousContacts,
       previousQsoContext,
+      callsignProfile,
     },
   };
 }

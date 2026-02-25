@@ -3,6 +3,7 @@ dist/
 *.js.map
 .env
 .DS_Store
+.claude/
 
 # Generated WAV test fixtures (regenerate via: npm run generate-fixtures)
 test/fixtures/wav/

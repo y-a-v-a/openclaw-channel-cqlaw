@@ -44,6 +44,9 @@ The plugin reads its configuration from the `openclaw.json` channel config. All 
 | `tx.pttMethod` | string | `"none"` | PTT method: `"cat"`, `"vox"`, `"serial"`, `"none"` |
 | `qrz.username` | string | `""` | QRZ XML API username (optional, for callsign enrichment) |
 | `qrz.password` | string | `""` | QRZ XML API password or key (optional, can be provided via env var) |
+| `callsignLookup.enabled` | boolean | `true` | Enable callsign enrichment lookups |
+| `callsignLookup.provider` | string | `"mock"` | Lookup provider: `"mock"`, `"qrz"`, `"hamdb"`, `"callook"`, `"hamqth"`, `"auto"` |
+| `callsignLookup.cacheTtlSeconds` | number | `86400` | Lookup cache TTL in seconds |
 
 Environment variable overrides (useful for secrets and deployment):
 
@@ -54,6 +57,14 @@ Environment variable overrides (useful for secrets and deployment):
 - `CQLAW_FLDIGI_HOST`, `CQLAW_FLDIGI_PORT`, `CQLAW_FLDIGI_POLLING_INTERVAL_MS`
 - `CQLAW_SDR_ENABLED`, `CQLAW_SDR_DEVICE`, `CQLAW_SDR_SAMPLE_RATE`
 - `CQLAW_TX_ENABLED`, `CQLAW_TX_INHIBIT`, `CQLAW_TX_MAX_DURATION_SECONDS`, `CQLAW_TX_WPM`, `CQLAW_TX_PTT_METHOD`
+- `CQLAW_CALLSIGN_LOOKUP_ENABLED`, `CQLAW_CALLSIGN_LOOKUP_PROVIDER`, `CQLAW_CALLSIGN_LOOKUP_CACHE_TTL_SECONDS`
+
+Callsign lookup is provider-agnostic. The default `mock` provider is intended for development and testing; production providers (QRZ/HamDB/Callook/HamQTH) can be added behind the same interface.
+
+Current provider status:
+- `mock`: implemented (deterministic local data for development/tests)
+- `qrz`: interface placeholder present; XML API transport/session flow still pending
+- `hamdb` / `callook` / `hamqth`: reserved provider IDs for follow-up implementations
 
 ## Development
 
@@ -408,6 +419,7 @@ src/
   fldigi-poller.ts    — Polling loop: fldigi → SentenceBuffer → callsign → dispatch
   sentence-buffer.ts  — Accumulates decoded CW, flushes on prosign or silence
   callsign.ts         — Amateur radio callsign pattern extraction
+  callsign-lookup.ts  — Provider-agnostic lookup service (mock provider + provider interface)
 scripts/
   play-wav-to-fldigi.sh — Play a WAV into fldigi via virtual audio, show decoded text
 docs/
