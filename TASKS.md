@@ -253,10 +253,13 @@ Pre-hardware note:
 ### 4.3 PTT (Push-to-Talk) Control
 
 - [x] **4.3.1** Implement PTT control via fldigi's built-in CAT/RIG control (fldigi handles PTT when text is in TX buffer)
-- [ ] **4.3.2** Implement fallback PTT via VOX (voice-operated relay — fldigi's audio output triggers the rig's TX)
-- [ ] **4.3.3** Implement fallback PTT via serial DTR/RTS line for rigs that support it
+- [x] **4.3.2** Implement fallback PTT via VOX (voice-operated relay — fldigi's audio output triggers the rig's TX)
+  - **Implementation:** `PttController` abstraction in `src/ptt-controller.ts`. `NullPttController` for `vox` mode: logs "VOX PTT — transceiver will key on audio; ensure VOX is enabled on the rig" and lets fldigi's `main.tx()` output audio while the radio's VOX circuit handles keying. No additional plugin action needed.
+- [x] **4.3.3** Implement fallback PTT via serial DTR/RTS line for rigs that support it
+  - **Implementation:** `SerialPttController` in `src/ptt-controller.ts`. Holds a persistent Python/pyserial child process open to control the serial line. Sends "1" to raise DTR/RTS before `main.tx()` and "0" to lower after `main.rx()`. Configure via `tx.pttSerialPort` (e.g. `/dev/ttyUSB0`) and `tx.pttSerialLine` (`"dtr"` or `"rts"`). Requires `pip install pyserial`. Errors for missing Python or pyserial are surfaced with clear install instructions.
 - [x] **4.3.4** Add `tx.pttMethod` config field: `"cat"`, `"vox"`, `"serial"`, or `"none"` (for testing without a rig)
-- [ ] **4.3.5** Verify PTT activates before TX audio starts and deactivates after TX audio ends
+- [x] **4.3.5** Verify PTT activates before TX audio starts and deactivates after TX audio ends
+  - **Implementation:** `PttController.activate()` is called before `client.startTx()`, `deactivate()` after `client.stopTx()` (in completion timer, duration abort, and emergency stop paths). Covered by ptt-controller unit tests.
 
 ### 4.4 Speed Matching (Critical Operator Etiquette)
 

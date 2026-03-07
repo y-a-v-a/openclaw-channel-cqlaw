@@ -24,6 +24,10 @@ export interface TxConfig {
   wpm: number;
   callsign: string;
   pttMethod: "cat" | "vox" | "serial" | "none";
+  /** Serial port device path for serial PTT (e.g. "/dev/ttyUSB0"). Required when pttMethod is "serial". */
+  pttSerialPort: string;
+  /** Serial control line to use for PTT when pttMethod is "serial". Default: "dtr". */
+  pttSerialLine: "dtr" | "rts";
 }
 
 export interface QrzConfig {
@@ -66,6 +70,8 @@ const TX_DEFAULTS: TxConfig = {
   wpm: 20,
   callsign: "",
   pttMethod: "none",
+  pttSerialPort: "",
+  pttSerialLine: "dtr",
 };
 
 const QRZ_DEFAULTS: QrzConfig = {
@@ -125,6 +131,10 @@ export function validateConfig(config: ChannelConfig): ConfigValidationError[] {
     errors.push({ field: "tx.callsign", message: "Callsign is required when TX is enabled" });
   } else if (config.tx.callsign && !isCallsign(config.tx.callsign)) {
     errors.push({ field: "tx.callsign", message: "Callsign must match amateur radio format (e.g. PA3XYZ)" });
+  }
+
+  if (config.tx.pttMethod === "serial" && !config.tx.pttSerialPort) {
+    errors.push({ field: "tx.pttSerialPort", message: "tx.pttSerialPort is required when pttMethod is 'serial'" });
   }
 
   if (config.qrz.username && !config.qrz.password) {
@@ -200,6 +210,8 @@ function resolveEnvConfig(env: NodeJS.ProcessEnv): PartialChannelConfig {
     wpm: envInt(env, "CQLAW_TX_WPM"),
     callsign: envString(env, "CQLAW_TX_CALLSIGN") ?? envString(env, "OPENCLAW_TX_CALLSIGN"),
     pttMethod: envPttMethod(env, "CQLAW_TX_PTT_METHOD"),
+    pttSerialPort: envString(env, "CQLAW_TX_PTT_SERIAL_PORT"),
+    pttSerialLine: envPttSerialLine(env, "CQLAW_TX_PTT_SERIAL_LINE"),
   });
   const qrz = definedValues<Partial<QrzConfig>>({
     username: envString(env, "CQLAW_QRZ_USERNAME"),
@@ -275,6 +287,14 @@ function envLookupProvider(env: NodeJS.ProcessEnv, key: string): CallsignLookupC
   ) {
     return normalized;
   }
+  return undefined;
+}
+
+function envPttSerialLine(env: NodeJS.ProcessEnv, key: string): TxConfig["pttSerialLine"] | undefined {
+  const value = envString(env, key);
+  if (!value) return undefined;
+  const normalized = value.toLowerCase();
+  if (normalized === "dtr" || normalized === "rts") return normalized;
   return undefined;
 }
 

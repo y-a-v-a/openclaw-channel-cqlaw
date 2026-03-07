@@ -17,6 +17,7 @@ import { FldigiClient } from "./fldigi-client.js";
 import { sanitizeForCw } from "./cw-sanitize.js";
 import { formatForCw, type TxIntent } from "./cw-format.js";
 import type { ChannelConfig } from "./config.js";
+import { type PttController, createPttController } from "./ptt-controller.js";
 
 /** Minimum gap between consecutive transmissions (ms) */
 const TX_COOLDOWN_MS = 500;
@@ -57,6 +58,7 @@ export class Transmitter {
   private readonly client: FldigiClient;
   private readonly config: ChannelConfig;
   private readonly callbacks: TransmitterCallbacks;
+  private readonly ptt: PttController;
 
   private lastTxTime = 0;
   private lastIdTime = 0;
@@ -68,11 +70,17 @@ export class Transmitter {
   private txCompletionTimer: ReturnType<typeof setInterval> | null = null;
   private operationQueue: Promise<void> = Promise.resolve();
 
-  constructor(client: FldigiClient, config: ChannelConfig, callbacks: TransmitterCallbacks) {
+  constructor(
+    client: FldigiClient,
+    config: ChannelConfig,
+    callbacks: TransmitterCallbacks,
+    ptt?: PttController,
+  ) {
     this.client = client;
     this.config = config;
     this.callbacks = callbacks;
     this.inhibited = config.tx.inhibit;
+    this.ptt = ptt ?? createPttController(config.tx);
   }
 
   /**
@@ -95,6 +103,11 @@ export class Transmitter {
     } catch {
       // Best-effort — log but don't throw
     }
+    try {
+      await this.ptt.deactivate();
+    } catch {
+      // Best-effort
+    }
     console.log("[transmitter] EMERGENCY STOP — TX inhibited");
   }
 
@@ -104,10 +117,11 @@ export class Transmitter {
     console.log("[transmitter] TX inhibit cleared");
   }
 
-  /** Cancel pending timers. Call on shutdown. */
-  destroy(): void {
+  /** Release all resources. Call on shutdown. */
+  async destroy(): Promise<void> {
     this.clearDurationTimer();
     this.clearCompletionTimer();
+    await this.ptt.destroy();
   }
 
   /**
@@ -186,8 +200,10 @@ export class Transmitter {
     // --- Transmit ---
     try {
       await this.client.sendTxText(finalText);
+      await this.ptt.activate();
       await this.client.startTx();
     } catch (err) {
+      await this.ptt.deactivate().catch(() => undefined);
       return { success: false, error: `fldigi TX error: ${err instanceof Error ? err.message : err}` };
     }
 
@@ -358,6 +374,7 @@ export class Transmitter {
       try {
         await this.client.abortTx();
         await this.client.stopTx();
+        await this.ptt.deactivate();
       } catch {
         // Best effort
       } finally {
@@ -392,6 +409,7 @@ export class Transmitter {
             this.txInProgress = false;
             this.clearDurationTimer();
             this.clearCompletionTimer();
+            await this.ptt.deactivate().catch(() => undefined);
           }
         } else {
           emptySamples = 0;

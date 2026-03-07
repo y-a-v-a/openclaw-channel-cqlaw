@@ -15,6 +15,7 @@ const tiers = {
     "dist/test/context-reconstruct.test.js",
     "dist/test/cw-band-plan.test.js",
     "dist/test/decode-quality.test.js",
+    "dist/test/ptt-controller.test.js",
     "dist/test/fuzzy-match.test.js",
     "dist/test/qso-extract.test.js",
     "dist/test/qso-memory.test.js",
