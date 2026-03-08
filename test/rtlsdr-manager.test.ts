@@ -305,6 +305,32 @@ describe("RtlSdrManager", () => {
     await manager.stop();
   });
 
+  it("sets status to error and schedules restart on unexpected audio sink exit", async () => {
+    const statuses: SdrManagerStatus[] = [];
+    const { spawnFn } = makeSpawnFactory(rtlFmProc, audioProc);
+    const manager = new RtlSdrManager(
+      {
+        sdr: DEFAULT_SDR,
+        frequency: 7_030_000,
+        spawnFn,
+        checkBinaryFn: async () => true,
+        audioSinkCommand: ["pacat"],
+      },
+      { onStatusChange: (s) => statuses.push(s) },
+    );
+
+    await manager.start();
+    assert.equal(manager.getStatus(), "running");
+
+    audioProc.exitCode = 1;
+    audioProc.emit("exit", 1, null);
+
+    assert.equal(manager.getStatus(), "error");
+    assert.ok(statuses.includes("error"));
+
+    await manager.stop();
+  });
+
   it("calls onDeviceDisconnected when USB disconnect pattern detected in stderr", async () => {
     const disconnectEvents: number[] = [];
     const { spawnFn } = makeSpawnFactory(rtlFmProc, audioProc);

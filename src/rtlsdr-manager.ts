@@ -214,9 +214,19 @@ export class RtlSdrManager {
       this.callbacks.onError?.(err);
     });
 
+    audioSink.on("exit", (code, signal) => {
+      if (!this.running || this.status === "stopping") return;
+      console.warn(
+        `[rtlsdr-manager] audio sink exited unexpectedly (code=${code}, signal=${signal}), ` +
+          `retrying in ${this.backoffMs}ms`,
+      );
+      this.setStatus("error");
+      this.scheduleRestart();
+    });
+
     // Auto-restart on unexpected rtl_fm exit
     rtlFm.on("exit", (code, signal) => {
-      if (!this.running) return;
+      if (!this.running || this.status === "stopping") return;
       console.warn(
         `[rtlsdr-manager] rtl_fm exited unexpectedly (code=${code}, signal=${signal}), ` +
           `retrying in ${this.backoffMs}ms`,
@@ -245,6 +255,7 @@ export class RtlSdrManager {
 
   private scheduleRestart(): void {
     if (!this.running) return;
+    if (this.restartTimer) return;
     this.restartTimer = setTimeout(async () => {
       this.restartTimer = null;
       if (!this.running) return;
