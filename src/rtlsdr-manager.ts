@@ -208,6 +208,12 @@ export class RtlSdrManager {
       process.stderr.write(`[audio-sink] ${data.toString()}`);
     });
 
+    audioSink.on("error", (err) => {
+      console.error(`[rtlsdr-manager] audio sink process error: ${err.message}`);
+      this.setStatus("error");
+      this.callbacks.onError?.(err);
+    });
+
     // Auto-restart on unexpected rtl_fm exit
     rtlFm.on("exit", (code, signal) => {
       if (!this.running) return;

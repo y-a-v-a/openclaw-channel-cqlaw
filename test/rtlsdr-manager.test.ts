@@ -247,6 +247,36 @@ describe("RtlSdrManager", () => {
     await manager.stop();
   });
 
+  it("emits error status and calls onError when audio sink emits an error", async () => {
+    const errors: Error[] = [];
+    const statuses: SdrManagerStatus[] = [];
+    const { spawnFn } = makeSpawnFactory(rtlFmProc, audioProc);
+    const manager = new RtlSdrManager(
+      {
+        sdr: DEFAULT_SDR,
+        frequency: 7_030_000,
+        spawnFn,
+        checkBinaryFn: async () => true,
+        audioSinkCommand: ["pacat"],
+      },
+      {
+        onError: (err) => errors.push(err),
+        onStatusChange: (s) => statuses.push(s),
+      },
+    );
+
+    await manager.start();
+    const sinkErr = new Error("spawn pacat ENOENT");
+    audioProc.emit("error", sinkErr);
+
+    assert.equal(manager.getStatus(), "error");
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0], sinkErr);
+    assert.ok(statuses.includes("error"));
+
+    await manager.stop();
+  });
+
   it("sets status to error and schedules restart on unexpected rtl_fm exit", async () => {
     const statuses: SdrManagerStatus[] = [];
     const { spawnFn } = makeSpawnFactory(rtlFmProc, audioProc);
