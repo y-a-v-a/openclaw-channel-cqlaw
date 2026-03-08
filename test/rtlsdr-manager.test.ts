@@ -420,6 +420,29 @@ describe("RtlSdrManager", () => {
     await manager.stop();
   });
 
+  it("resets restart backoff after a successful respawn", async () => {
+    const { spawnFn } = makeSpawnFactory(rtlFmProc, audioProc);
+    const manager = new RtlSdrManager(
+      {
+        sdr: DEFAULT_SDR,
+        frequency: 7_030_000,
+        spawnFn,
+        checkBinaryFn: async () => true,
+        audioSinkCommand: ["pacat"],
+      },
+      {},
+    );
+
+    await manager.start();
+    (manager as unknown as { backoffMs: number }).backoffMs = 16000;
+
+    await (manager as unknown as { terminatePipeline: () => Promise<void> }).terminatePipeline();
+    await (manager as unknown as { spawnPipeline: () => Promise<boolean> }).spawnPipeline();
+
+    assert.equal((manager as unknown as { backoffMs: number }).backoffMs, 1000);
+    await manager.stop();
+  });
+
   it("stop is idempotent", async () => {
     const { spawnFn } = makeSpawnFactory(rtlFmProc, audioProc);
     const manager = new RtlSdrManager(

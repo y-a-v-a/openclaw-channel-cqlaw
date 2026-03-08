@@ -243,6 +243,7 @@ export class RtlSdrManager {
     this.rtlFmProcess = rtlFm;
     this.audioProcess = audioSink;
     this.setStatus("running");
+    this.backoffMs = RESTART_BACKOFF_INITIAL_MS;
     return true;
   }
 
