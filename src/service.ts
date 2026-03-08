@@ -49,6 +49,7 @@ export interface ServiceOptions {
   extractFields?: (text: string, options?: { peerHint?: string }) => ExtractedQsoFields;
   onPollerCreated?: (poller: PollerLike) => void;
   onStatusChange?: (status: ChannelStatus) => void;
+  onStop?: () => Promise<void> | void;
   callsignLookup?: CallsignLookup;
 }
 
@@ -115,6 +116,11 @@ export function createService(api: OpenClawApi, options: ServiceOptions = {}): S
       if (poller) {
         await poller.stop();
         poller = null;
+      }
+      try {
+        await options.onStop?.();
+      } catch (err) {
+        console.error(`[morse-radio-service] stop hook failed: ${err instanceof Error ? err.message : err}`);
       }
     },
   };

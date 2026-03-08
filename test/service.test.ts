@@ -101,6 +101,37 @@ describe("createService", () => {
     assert.equal(startCalls, 0);
   });
 
+  it("runs onStop hook during service shutdown", async () => {
+    const api = createMockApi();
+    let stopHookCalls = 0;
+
+    const service = createService(api, {
+      createPoller: (_config: ChannelConfig, _cb: FldigiPollerCallbacks) => ({
+        async start() {},
+        async stop() {},
+      }),
+      createDupeStore: () => ({
+        initialize: () => {},
+        loadExisting: () => {},
+        isDupe: () => false,
+      }),
+      createMemoryStore: () => ({
+        initialize: () => {},
+        addRecord: () => {},
+        getByCallsign: () => [],
+        getKnownCallsigns: () => [],
+      }),
+      onStop: async () => {
+        stopHookCalls++;
+      },
+    });
+
+    await service.start();
+    await service.stop();
+
+    assert.equal(stopHookCalls, 1);
+  });
+
   it("flags dupes and low-confidence visually and includes previous contacts", async () => {
     const api = createMockApi();
     const callbackHolder: { callbacks?: FldigiPollerCallbacks } = {};

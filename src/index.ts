@@ -55,6 +55,9 @@ export function register(api: OpenClawApi): void {
         transmitter.markListenStart();
       }
     },
+    onStop: async () => {
+      await transmitter.destroy();
+    },
   });
   api.registerService(service);
 
