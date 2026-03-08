@@ -168,7 +168,7 @@ Pre-hardware note:
   - `-s <sampleRate>` (e.g., `48000`)
   - `-r <sampleRate>` (resample to match fldigi input)
 - [x] **3.1.3** Implement audio routing from `rtl_fm` stdout to fldigi's audio input via the virtual audio device
-  - **Implementation:** rtl_fm stdout is piped to a configurable audio sink process (default: `pacat` PulseAudio client). Both processes are managed together as a pipeline. Audio sink command is injected via `audioSinkCommand` option so tests and alternative backends can override it.
+  - **Implementation:** rtl_fm stdout is piped to a configurable audio sink process (default: `pacat` PulseAudio client). Both processes are managed together as a pipeline. Audio sink command is injected via `audioSinkCommand` option so tests and alternative backends can override it. Audio sink `error` and unexpected `exit` are now handled explicitly.
 - [x] **3.1.4** Implement `stop()`: gracefully terminate the `rtl_fm` process (SIGTERM, then SIGKILL after timeout)
 - [x] **3.1.5** Implement `restart()`: stop and start with the new configuration (e.g., frequency change)
 - [x] **3.1.6** Implement `setFrequency(hz: number)`: change the tuned frequency, requiring a process restart or using rtl_fm's control interface if available
@@ -176,6 +176,7 @@ Pre-hardware note:
 ### 3.2 Process Lifecycle and Error Handling
 
 - [x] **3.2.1** Monitor the `rtl_fm` child process for unexpected exit and auto-restart with backoff
+  - **Implementation update (2026-03-08):** Unexpected exit of either `rtl_fm` or the audio sink now triggers error status + restart scheduling, restart timers are de-duplicated, and restart backoff is reset after a successful respawn.
 - [x] **3.2.2** Handle USB disconnect: detect when the RTL-SDR dongle is unplugged (rtl_fm exits with specific error) and emit a `device-disconnected` event
 - [~] **3.2.3** Handle USB reconnect: detect when the dongle is plugged back in and auto-restart `rtl_fm`
   - **Status note (2026-03-07):** USB disconnect is detected and `onDeviceDisconnected` callback is called. Automatic USB reconnect detection (hotplug) is not yet implemented — the auto-restart backoff loop will re-attempt `rtl_fm` spawn which effectively re-checks for device availability.
@@ -259,7 +260,7 @@ Pre-hardware note:
   - **Implementation:** `SerialPttController` in `src/ptt-controller.ts`. Holds a persistent Python/pyserial child process open to control the serial line. Sends "1" to raise DTR/RTS before `main.tx()` and "0" to lower after `main.rx()`. Configure via `tx.pttSerialPort` (e.g. `/dev/ttyUSB0`) and `tx.pttSerialLine` (`"dtr"` or `"rts"`). Requires `pip install pyserial`. Errors for missing Python or pyserial are surfaced with clear install instructions.
 - [x] **4.3.4** Add `tx.pttMethod` config field: `"cat"`, `"vox"`, `"serial"`, or `"none"` (for testing without a rig)
 - [x] **4.3.5** Verify PTT activates before TX audio starts and deactivates after TX audio ends
-  - **Implementation:** `PttController.activate()` is called before `client.startTx()`, `deactivate()` after `client.stopTx()` (in completion timer, duration abort, and emergency stop paths). Covered by ptt-controller unit tests.
+  - **Implementation:** `PttController.activate()` is called before `client.startTx()`, `deactivate()` after `client.stopTx()` (in completion timer, duration abort, emergency stop, and QRL check paths). Transmitter resources are also released on service stop via `Transmitter.destroy()`. Covered by ptt-controller and transmitter unit tests.
 
 ### 4.4 Speed Matching (Critical Operator Etiquette)
 
