@@ -101,9 +101,8 @@ export class RtlSdrManager {
   /** Start the rtl_fm pipeline. No-op if already running. */
   async start(): Promise<void> {
     if (this.running) return;
-    this.running = true;
     this.backoffMs = RESTART_BACKOFF_INITIAL_MS;
-    await this.spawnPipeline();
+    this.running = await this.spawnPipeline();
   }
 
   /** Stop the pipeline gracefully. Clears any pending restart timers. */
@@ -121,7 +120,7 @@ export class RtlSdrManager {
   async restart(): Promise<void> {
     await this.terminatePipeline();
     if (this.running) {
-      await this.spawnPipeline();
+      this.running = await this.spawnPipeline();
     }
   }
 
@@ -146,10 +145,10 @@ export class RtlSdrManager {
 
   // --- internals ---
 
-  private async spawnPipeline(): Promise<void> {
+  private async spawnPipeline(): Promise<boolean> {
     if (!this.sdr.enabled) {
       console.log("[rtlsdr-manager] SDR disabled — skipping rtl_fm startup");
-      return;
+      return false;
     }
 
     this.setStatus("starting");
@@ -162,7 +161,7 @@ export class RtlSdrManager {
       console.error(`[rtlsdr-manager] ${err.message}`);
       this.setStatus("error");
       this.callbacks.onError?.(err);
-      return;
+      return false;
     }
 
     const bandCheck = checkCwBandPlan(this.currentFrequency);
@@ -244,6 +243,7 @@ export class RtlSdrManager {
     this.rtlFmProcess = rtlFm;
     this.audioProcess = audioSink;
     this.setStatus("running");
+    return true;
   }
 
   private async terminatePipeline(): Promise<void> {
@@ -260,7 +260,7 @@ export class RtlSdrManager {
       this.restartTimer = null;
       if (!this.running) return;
       await this.terminatePipeline();
-      await this.spawnPipeline();
+      this.running = await this.spawnPipeline();
     }, this.backoffMs);
     this.backoffMs = Math.min(this.backoffMs * 2, RESTART_BACKOFF_MAX_MS);
   }

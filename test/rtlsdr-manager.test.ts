@@ -247,6 +247,32 @@ describe("RtlSdrManager", () => {
     await manager.stop();
   });
 
+  it("allows start() retry after initial binary-not-found failure", async () => {
+    const { spawnFn, calls } = makeSpawnFactory(rtlFmProc, audioProc);
+    let binaryAvailable = false;
+    const manager = new RtlSdrManager(
+      {
+        sdr: DEFAULT_SDR,
+        frequency: 7_030_000,
+        spawnFn,
+        checkBinaryFn: async () => binaryAvailable,
+        audioSinkCommand: ["pacat"],
+      },
+      {},
+    );
+
+    await manager.start();
+    assert.equal(manager.getStatus(), "error");
+    assert.equal(calls.length, 0);
+
+    binaryAvailable = true;
+    await manager.start();
+    assert.equal(manager.getStatus(), "running");
+    assert.equal(calls.length, 2);
+
+    await manager.stop();
+  });
+
   it("emits error status and calls onError when audio sink emits an error", async () => {
     const errors: Error[] = [];
     const statuses: SdrManagerStatus[] = [];
