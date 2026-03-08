@@ -108,7 +108,7 @@ describe("Transmitter", () => {
   let tx: Transmitter | null = null;
 
   afterEach(async () => {
-    tx?.destroy();
+    await tx?.destroy();
     tx = null;
     if (mock?.server.listening) {
       await mock.stop();
