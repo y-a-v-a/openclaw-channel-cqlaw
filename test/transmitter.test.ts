@@ -343,6 +343,28 @@ describe("Transmitter", () => {
     assert.ok(mock.getMethodsCalled().includes("main.rx"));
   });
 
+  it("uses PTT controller activate/deactivate during QRL check", async () => {
+    mock = createMockFldigi();
+    const port = await mock.start();
+    const config = resolveConfig({ fldigi: { port }, tx: { enabled: true, callsign: "PA3XYZ" } });
+    const client = new FldigiClient({ host: "127.0.0.1", port });
+    const { callbacks } = createCallbacks();
+    const pttCalls: string[] = [];
+
+    tx = new Transmitter(client, config, callbacks, {
+      activate: async () => {
+        pttCalls.push("activate");
+      },
+      deactivate: async () => {
+        pttCalls.push("deactivate");
+      },
+      destroy: async () => undefined,
+    });
+
+    await tx.checkQrl();
+    assert.deepEqual(pttCalls, ["activate", "deactivate"]);
+  });
+
   it("serializes concurrent sends so cooldown is enforced", async () => {
     mock = createMockFldigi();
     const port = await mock.start();

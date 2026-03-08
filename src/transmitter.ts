@@ -244,6 +244,7 @@ export class Transmitter {
       const rxBefore = await this.client.getRxLength();
 
       await this.client.sendTxText("QRL?");
+      await this.ptt.activate();
       await this.client.startTx();
 
       console.log(`[transmitter] Sent QRL? — waiting ${QRL_WAIT_MS}ms for response`);
@@ -273,6 +274,7 @@ export class Transmitter {
       } catch {
         // Best effort
       }
+      await this.ptt.deactivate().catch(() => undefined);
       this.txInProgress = false;
       this.clearDurationTimer();
       this.clearCompletionTimer();
