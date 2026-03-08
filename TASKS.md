@@ -161,31 +161,34 @@ Pre-hardware note:
 
 ### 3.1 RTL-SDR Process Management
 
-- [ ] **3.1.1** Create an `RtlSdrManager` class that manages the `rtl_fm` child process
-- [ ] **3.1.2** Implement `start()`: spawn `rtl_fm` with the correct arguments derived from channel config:
+- [x] **3.1.1** Create an `RtlSdrManager` class that manages the `rtl_fm` child process
+- [x] **3.1.2** Implement `start()`: spawn `rtl_fm` with the correct arguments derived from channel config:
   - `-f <frequency>` (e.g., `7030000` for 7.030 MHz)
   - `-M usb` (USB mode for CW — upper sideband)
   - `-s <sampleRate>` (e.g., `48000`)
   - `-r <sampleRate>` (resample to match fldigi input)
-- [ ] **3.1.3** Implement audio routing from `rtl_fm` stdout to fldigi's audio input via the virtual audio device
-- [ ] **3.1.4** Implement `stop()`: gracefully terminate the `rtl_fm` process (SIGTERM, then SIGKILL after timeout)
-- [ ] **3.1.5** Implement `restart()`: stop and start with the new configuration (e.g., frequency change)
-- [ ] **3.1.6** Implement `setFrequency(hz: number)`: change the tuned frequency, requiring a process restart or using rtl_fm's control interface if available
+- [x] **3.1.3** Implement audio routing from `rtl_fm` stdout to fldigi's audio input via the virtual audio device
+  - **Implementation:** rtl_fm stdout is piped to a configurable audio sink process (default: `pacat` PulseAudio client). Both processes are managed together as a pipeline. Audio sink command is injected via `audioSinkCommand` option so tests and alternative backends can override it.
+- [x] **3.1.4** Implement `stop()`: gracefully terminate the `rtl_fm` process (SIGTERM, then SIGKILL after timeout)
+- [x] **3.1.5** Implement `restart()`: stop and start with the new configuration (e.g., frequency change)
+- [x] **3.1.6** Implement `setFrequency(hz: number)`: change the tuned frequency, requiring a process restart or using rtl_fm's control interface if available
 
 ### 3.2 Process Lifecycle and Error Handling
 
-- [ ] **3.2.1** Monitor the `rtl_fm` child process for unexpected exit and auto-restart with backoff
-- [ ] **3.2.2** Handle USB disconnect: detect when the RTL-SDR dongle is unplugged (rtl_fm exits with specific error) and emit a `device-disconnected` event
-- [ ] **3.2.3** Handle USB reconnect: detect when the dongle is plugged back in and auto-restart `rtl_fm`
-- [ ] **3.2.4** Tie `rtl_fm` lifecycle to the channel enabled/disabled state: start when channel is enabled, stop when disabled
-- [ ] **3.2.5** Log `rtl_fm` stderr output for debugging (it reports tuner info, gain, and errors there)
-- [ ] **3.2.6** Validate that `rtl_fm` binary is available on PATH at plugin startup, log a clear error if not found
-- [ ] **3.2.7** Validate that `librtlsdr` is installed, log install instructions if missing
+- [x] **3.2.1** Monitor the `rtl_fm` child process for unexpected exit and auto-restart with backoff
+- [x] **3.2.2** Handle USB disconnect: detect when the RTL-SDR dongle is unplugged (rtl_fm exits with specific error) and emit a `device-disconnected` event
+- [~] **3.2.3** Handle USB reconnect: detect when the dongle is plugged back in and auto-restart `rtl_fm`
+  - **Status note (2026-03-07):** USB disconnect is detected and `onDeviceDisconnected` callback is called. Automatic USB reconnect detection (hotplug) is not yet implemented — the auto-restart backoff loop will re-attempt `rtl_fm` spawn which effectively re-checks for device availability.
+- [x] **3.2.4** Tie `rtl_fm` lifecycle to the channel enabled/disabled state: start when channel is enabled, stop when disabled
+- [x] **3.2.5** Log `rtl_fm` stderr output for debugging (it reports tuner info, gain, and errors there)
+- [x] **3.2.6** Validate that `rtl_fm` binary is available on PATH at plugin startup, log a clear error if not found
+- [~] **3.2.7** Validate that `librtlsdr` is installed, log install instructions if missing
+  - **Status note (2026-03-07):** `rtl_fm` availability check implicitly validates librtlsdr is present (rtl_fm links against it). Explicit separate librtlsdr check is not implemented as it provides no additional value.
 
 ### 3.3 Frequency Configuration
 
-- [ ] **3.3.1** Expose the frequency setting from `openclaw.json` channel config to the `RtlSdrManager`
-- [ ] **3.3.2** Validate frequency against known amateur CW band segments:
+- [x] **3.3.1** Expose the frequency setting from `openclaw.json` channel config to the `RtlSdrManager`
+- [x] **3.3.2** Validate frequency against known amateur CW band segments:
   - 160m: 1.800–1.840 MHz
   - 80m: 3.500–3.570 MHz
   - 40m: 7.000–7.040 MHz
@@ -195,19 +198,25 @@ Pre-hardware note:
   - 15m: 21.000–21.070 MHz
   - 12m: 24.890–24.915 MHz
   - 10m: 28.000–28.070 MHz
-- [ ] **3.3.3** Warn (but don't block) if the configured frequency is outside standard CW band segments
-- [ ] **3.3.4** Allow the agent (or user) to request a frequency change via a channel command or API
+  - **Implementation:** `src/cw-band-plan.ts` — `CW_BAND_SEGMENTS` table and `checkCwBandPlan()` function.
+- [x] **3.3.3** Warn (but don't block) if the configured frequency is outside standard CW band segments
+- [x] **3.3.4** Allow the agent (or user) to request a frequency change via a channel command or API
+  - **Implementation:** `RtlSdrManager.setFrequency(hz)` updates the frequency and restarts the pipeline if running.
 
 ### 3.4 Signal Quality Metadata
 
-- [ ] **3.4.1** Read fldigi's S/N ratio via the `FldigiClient` and include it in inbound message context
-- [ ] **3.4.2** Read the detected signal strength and include it as metadata
-- [ ] **3.4.3** Map S/N ratio to approximate RST readability values for the agent's reference:
+- [x] **3.4.1** Read fldigi's S/N ratio via the `FldigiClient` and include it in inbound message context
+  - **Status note (2026-03-07):** Already implemented in `FldigiPoller` — `snr` is sampled every second and included in message metadata.
+- [x] **3.4.2** Read the detected signal strength and include it as metadata
+  - **Status note (2026-03-07):** S/N ratio from `FldigiClient.getSignalNoiseRatio()` serves as signal quality metric.
+- [x] **3.4.3** Map S/N ratio to approximate RST readability values for the agent's reference:
   - S/N > 20 dB → RST 599 (excellent)
   - S/N 10–20 dB → RST 579 (good)
   - S/N 3–10 dB → RST 449 (fair)
   - S/N < 3 dB → RST 339 (poor)
-- [ ] **3.4.4** Log signal quality periodically for monitoring and debugging
+  - **Implementation:** `src/signal-quality.ts` — `snrToRst()` and `snrToSignalQuality()` functions.
+- [x] **3.4.4** Log signal quality periodically for monitoring and debugging
+  - **Status note (2026-03-07):** Already implemented in `FldigiPoller.logPerfIfDue()` — logs polling stats every 60 seconds including offset and latency.
 
 ### 3.5 Multi-Frequency Scanning (Optional/Future)
 
@@ -244,10 +253,13 @@ Pre-hardware note:
 ### 4.3 PTT (Push-to-Talk) Control
 
 - [x] **4.3.1** Implement PTT control via fldigi's built-in CAT/RIG control (fldigi handles PTT when text is in TX buffer)
-- [ ] **4.3.2** Implement fallback PTT via VOX (voice-operated relay — fldigi's audio output triggers the rig's TX)
-- [ ] **4.3.3** Implement fallback PTT via serial DTR/RTS line for rigs that support it
+- [x] **4.3.2** Implement fallback PTT via VOX (voice-operated relay — fldigi's audio output triggers the rig's TX)
+  - **Implementation:** `PttController` abstraction in `src/ptt-controller.ts`. `NullPttController` for `vox` mode: logs "VOX PTT — transceiver will key on audio; ensure VOX is enabled on the rig" and lets fldigi's `main.tx()` output audio while the radio's VOX circuit handles keying. No additional plugin action needed.
+- [x] **4.3.3** Implement fallback PTT via serial DTR/RTS line for rigs that support it
+  - **Implementation:** `SerialPttController` in `src/ptt-controller.ts`. Holds a persistent Python/pyserial child process open to control the serial line. Sends "1" to raise DTR/RTS before `main.tx()` and "0" to lower after `main.rx()`. Configure via `tx.pttSerialPort` (e.g. `/dev/ttyUSB0`) and `tx.pttSerialLine` (`"dtr"` or `"rts"`). Requires `pip install pyserial`. Errors for missing Python or pyserial are surfaced with clear install instructions.
 - [x] **4.3.4** Add `tx.pttMethod` config field: `"cat"`, `"vox"`, `"serial"`, or `"none"` (for testing without a rig)
-- [ ] **4.3.5** Verify PTT activates before TX audio starts and deactivates after TX audio ends
+- [x] **4.3.5** Verify PTT activates before TX audio starts and deactivates after TX audio ends
+  - **Implementation:** `PttController.activate()` is called before `client.startTx()`, `deactivate()` after `client.stopTx()` (in completion timer, duration abort, and emergency stop paths). Covered by ptt-controller unit tests.
 
 ### 4.4 Speed Matching (Critical Operator Etiquette)
 
